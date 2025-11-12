@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-// import { useForm } from "react-hook-form";
-import axios from "axios";
 import { login } from "../../store/authSlice";
+import API from "../../api/axios";
 
 export default function VerifyOTP() {
   const [otp, setOtp] = useState("");
@@ -15,10 +14,8 @@ export default function VerifyOTP() {
 
   const email = localStorage.getItem("emailVerify");
   const { status } = useSelector((state) => state.auth);
-  // const { register, handleSubmit } = useForm();
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
-    // Only start timer if there's time left
     if (timeLeft <= 0) return;
 
     const timer = setInterval(() => {
@@ -31,7 +28,7 @@ export default function VerifyOTP() {
       });
     }, 1000);
 
-    return () => clearInterval(timer); // cleanup
+    return () => clearInterval(timer);
   }, [timeLeft]);
 
   useEffect(() => {
@@ -49,7 +46,7 @@ export default function VerifyOTP() {
       return;
     }
     try {
-      const response = await axios.post(`${API_URL}/auth/verify`, {
+      const response = await API.post("auth/verify", {
         email,
         otp,
         type: location.state?.type,
@@ -80,7 +77,7 @@ export default function VerifyOTP() {
     setTimeLeft(30);
 
     try {
-      await axios.post(`${API_URL}/auth/resendotp`, {
+      await API.post("/auth/resendotp", {
         email,
         type: location.state?.type,
       });
@@ -93,7 +90,7 @@ export default function VerifyOTP() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="w-full lg:w-2/5 bg-dark flex items-center justify-center p-8">
+      <div className="w-full lg:w-2/5 bg-bg flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <h1 className="text-white text-4xl font-bold mb-2">Verify OTP</h1>
           <p className="text-gray-400 text-sm mb-8">
@@ -112,7 +109,7 @@ export default function VerifyOTP() {
               id="otp"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors text-center text-lg tracking-widest"
+              className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors text-center text-lg tracking-widest"
               placeholder="Enter 6-digit OTP"
               required
             />

@@ -2,10 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./conf/database.js";
-import authRoutes from "./routers/auth.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import eventRoutes from "./routes/event.routes.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import authMiddleware from "./middleware/auth.middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,17 +24,17 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 app.use(
   cors({
-    origin: FRONTEND_URL
+    origin: FRONTEND_URL,
+    credentials: true,
   })
 );
 
 // reset API Routes reset
 app.use("/api/auth", authRoutes);
-
+app.use("/api/event", authMiddleware, eventRoutes);
 
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
-
 
 // app.get(/.*/, (req, res) => {
 //   res.sendFile(path.join(frontendPath, "index.html"));

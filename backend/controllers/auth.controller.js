@@ -1,9 +1,5 @@
-import {
-  checkUserExists,
-  generateToken,
-  sendOtp,
-  verifyOtp,
-} from "./helperFunctions.js";
+import User from "../models/Users.js";
+import { checkUserExists, generateTokens, sendOtp } from "./helperFunctions.js";
 import bcrypt from "bcrypt";
 
 // SIGNUP
@@ -21,12 +17,11 @@ export const signup = async (req, res) => {
 // FORGOT PASSWORD
 export const forgotPassword = async (req, res) => {
   try {
-    // const {newPassword,email,confirmPassword,type} = req.body;
-    const user={
-      email:req.body?.email,
-      password:req.body?.newPassword,
-      type:req.body?.type
-    }
+    const user = {
+      email: req.body?.email,
+      password: req.body?.newPassword,
+      type: req.body?.type,
+    };
     const result = await sendOtp(user, "reset");
     return res.status(result.status).json({ message: result.message });
   } catch (err) {
@@ -44,14 +39,18 @@ export const login = async (req, res) => {
 
     const user = await checkUserExists(email);
     if (!user) return res.status(404).json({ message: "User not found" });
-   
+
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+    const { accessToken, refreshToken } = generateTokens(user);
+    user.refreshTokens.push(refreshToken);
 
-    const token = generateToken(user);
+    await user.save();
+
     return res.status(200).json({
       message: "Login successful",
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -62,5 +61,21 @@ export const login = async (req, res) => {
   } catch (err) {
     console.error("loginFlow error:", err);
     res.status(500).json({ message: "Login failed" });
+  }
+};
+
+//LogOut
+export const logout = async (req, res) => {
+  try {
+    const { id, token } = req.body;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("logout error:", err);
+    res.status(500).json({ message: "Logout failed" });
   }
 };

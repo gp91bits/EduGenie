@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import axios from "axios";
+import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 
 export default function ForgotPass() {
@@ -23,9 +23,7 @@ export default function ForgotPass() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (
-      formData.newPassword.length < 6
-    ) {
+    if (formData.newPassword.length < 6) {
       setError("Password must be at least 6 characters long");
       return;
     }
@@ -35,8 +33,7 @@ export default function ForgotPass() {
     }
 
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL;
-      const response = await axios.post(`${API_URL}/auth/forgotPass`, formData);
+      const response = await API.post("/auth/forgotPass", formData);
 
       localStorage.setItem("emailVerify", formData.email);
       if (response.status === 200) {
@@ -53,7 +50,7 @@ export default function ForgotPass() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="w-full lg:w-2/5 bg-dark flex items-center justify-center p-8">
+      <div className="w-full lg:w-2/5 bg-bg flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <h1 className="text-white text-4xl font-bold mb-2">Reset Password</h1>
           <p className="text-gray-400 text-sm mb-8">
@@ -74,7 +71,7 @@ export default function ForgotPass() {
                 id="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors"
+                className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors"
                 placeholder="Enter your email"
                 required
               />
@@ -94,7 +91,7 @@ export default function ForgotPass() {
                   id="newPassword"
                   value={formData.newPassword}
                   onChange={handleChange}
-                  className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
+                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
                   placeholder="Enter new password"
                   required
                 />
@@ -122,7 +119,7 @@ export default function ForgotPass() {
                   id="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
+                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
                   placeholder="Re-enter new password"
                   required
                 />

@@ -1,38 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
-        
-        body {
-          font-family: 'Poppins', sans-serif;
-        }
-        
-        .font-poppins {
-          font-family: 'Poppins', sans-serif;
-        }
-        
-        :root {
-          --color-accent: 139 92 246;
-          --color-accent-dark: 124 58 237;
-          --color-dark: 23 23 23;
-          --color-dark-secondary: 38 38 38;
-        }
-        
-        .bg-accent {
-          background-color: rgb(var(--color-accent));
-        }
-        
-        .bg-dark {
-          background-color: rgb(var(--color-dark));
-        }
-        
-        .bg-dark-secondary {
-          background-color: rgb(var(--color-dark-secondary));
-        }
-        
-        .text-accent {
-          color: rgb(var(--color-accent));
-        }
-        
-        .border-dark-secondary {
-          border-color: rgb(var(--color-dark-secondary));
-        }
-        
+@theme {
+  --color-bg: hsl(0, 0%, 20%);
+  --color-bg-1: hsl(0, 0%, 35%);
+  --color-bg-2: hsl(0, 0%, 28%);
+  --color-bg-1: hsl(0, 0%, 25%);
+  --color-accent: #7a4bc4;
+  --color-accent-1: #945df0;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  color:white
+}
+
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+  display: inline-block;
+
+}

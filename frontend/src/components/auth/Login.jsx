@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import API from "../../api/axios";
+import { login } from "../../store/authSlice";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,10 +14,11 @@ export default function Login() {
   });
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { status } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (status || localStorage.getItem("token")) {
+    if (status || localStorage.getItem("accessToken")) {
       navigate("/", { replace: true });
     }
   }, [status, navigate]);
@@ -29,27 +31,29 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL;
-      const { data } = await axios.post(`${API_URL}/auth/login`, formData);
+      const { data } = await API.post("/auth/login", formData);
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/");
-      } else {
-        console.error("No token received from backend");
-      }
+      dispatch(
+        login({
+          userData: {
+            ...data.user,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+          },
+        })
+      );
+
+      navigate("/");
     } catch (error) {
       console.error("Login Error:", error.response?.data || error.message);
       setError(error.response?.data.message );
-      
     }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Login Form */}
-      <div className="w-full lg:w-2/5 bg-dark flex items-center justify-center p-8">
+      <div className="w-full lg:w-2/5 bg-bg flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <h1 className="text-white text-4xl font-bold mb-2">Login</h1>
           <p className="text-gray-400 text-sm mb-8">
@@ -69,7 +73,7 @@ export default function Login() {
                 id="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors"
+                className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors"
                 placeholder="Enter email"
                 required
               />
@@ -88,7 +92,7 @@ export default function Login() {
                   id="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full bg-dark-secondary text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
+                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-dark-secondary focus:border-accent focus:outline-none transition-colors pr-12"
                   placeholder="Enter password"
                   required
                 />
@@ -126,7 +130,7 @@ export default function Login() {
             </span>
             <button
               onClick={() => navigate("/auth/signup")}
-              className="bg-dark-secondary text-white px-6 py-2 rounded-lg text-sm hover:bg-gray-700 transition-colors ml-2"
+              className="bg-bg-top text-white px-6 py-2 rounded-lg text-sm hover:bg-gray-700 transition-colors ml-2"
             >
               Sign up
             </button>

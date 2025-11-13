@@ -36,14 +36,25 @@ export const refreshToken = async (req, res) => {
     const user = await User.findById(payload.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (!user.refreshTokens.includes(token))
+    // Check if token exists
+    if (!user.refreshTokens.includes(token)) {
       return res.status(403).json({ message: "Invalid refresh token" });
+    }
 
-    // Replace old token
+    // --- Rotate Refresh Token ---
+    const newTokens = generateTokens(user);
+
+    // Remove the used refresh token
     user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
 
-    const newTokens = generateTokens(user);
+    // Add the new one
     user.refreshTokens.push(newTokens.refreshToken);
+
+    // Optional: keep last 5 tokens to prevent accumulation
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens = user.refreshTokens.slice(-5);
+    }
+
     await user.save();
 
     return res.status(200).json({
@@ -55,6 +66,7 @@ export const refreshToken = async (req, res) => {
     return res.status(403).json({ message: "Invalid or expired token" });
   }
 };
+
 
 // EMAIL
 

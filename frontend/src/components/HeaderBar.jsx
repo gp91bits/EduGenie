@@ -3,6 +3,7 @@ import { LogOut, MessageSquareMore, User } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/authSlice";
 import { useNavigate } from "react-router-dom";
+import API from "../api/axios";
 
 function HeaderBar() {
   const dispatch = useDispatch();
@@ -15,15 +16,30 @@ function HeaderBar() {
     hour12: false,
   });
   const newsList = ["this is sample news!!", "this is also a sample news!!"];
-  const handelLogout = async () => {
+const handleLogout = async () => {
+  const userId = localStorage.getItem("userId");
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  try {
+    if (userId && refreshToken) {
+      await API.post(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {
+        id: userId,
+        token: refreshToken,
+      });
+    }
+  } catch (err) {
+    console.warn("Server logout skipped or failed:", err.message);
+  } finally {
+    localStorage.clear();
     dispatch(logout());
     navigate("/auth/login", { replace: true });
-  };
+  }
+};
+
+
   return (
     <div className="flex flex-wrap items-center m-2 bg-bg-1 h-16 rounded-xl">
-      <div className=" px-6 text-white text-lg">
-        Hello {userData?.name}!
-      </div>
+      <div className=" px-6 text-white text-lg">Hello {userData?.name}!</div>
       <div className="flex-1 overflow-hidden">
         <div className="animate-marquee whitespace-nowrap">
           {newsList.map((news, index) => (
@@ -45,7 +61,7 @@ function HeaderBar() {
       <div className="flex items-center justify-evenly gap-4 px-6 text-white">
         <button
           className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center hover:bg-red-400"
-          onClick={handelLogout}
+          onClick={handleLogout}
         >
           <LogOut size={20} strokeWidth={3} />
         </button>

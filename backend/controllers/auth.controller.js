@@ -64,18 +64,25 @@ export const login = async (req, res) => {
   }
 };
 
-//LogOut
+// Logout
 export const logout = async (req, res) => {
   try {
     const { id, token } = req.body;
+
+    if (!id || !token)
+      return res.status(200).json({ message: "Already logged out" });
+
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
+    user.refreshTokens = user.refreshTokens.filter(t => t !== token);
+    await user.save();
 
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     console.error("logout error:", err);
-    res.status(500).json({ message: "Logout failed" });
+    return res.status(500).json({ message: "Logout failed" });
   }
 };
+
+

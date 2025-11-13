@@ -1,4 +1,3 @@
-// src/api/axios.js
 import axios from "axios";
 
 const API = axios.create({
@@ -9,50 +8,40 @@ const API = axios.create({
 let isRefreshing = false;
 let refreshSubscribers = [];
 
-// Helper — queue pending requests while refresh in progress
-const subscribeTokenRefresh = (cb) => {
-  refreshSubscribers.push(cb);
-};
-
+const subscribeTokenRefresh = (cb) => refreshSubscribers.push(cb);
 const onRefreshed = (token) => {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
 };
 
-// ---------------------
-// REQUEST INTERCEPTOR
-// ---------------------
 API.interceptors.request.use(async (config) => {
   let accessToken = localStorage.getItem("accessToken");
   const refreshToken = localStorage.getItem("refreshToken");
 
   if (!accessToken) return config;
 
-  // Decode JWT payload to check expiry
   const payload = JSON.parse(atob(accessToken.split(".")[1]));
   const isExpired = payload.exp * 1000 < Date.now();
 
-  // If access token still valid → attach and go
   if (!isExpired) {
     config.headers.Authorization = `Bearer ${accessToken}`;
     return config;
   }
 
-  // If expired but no refresh token → logout
   if (!refreshToken) {
     localStorage.clear();
     window.location.href = "/auth/login";
-    return Promise.reject(new Error("No refresh token found"));
+    throw new Error("Missing refresh token");
   }
 
-  // If refresh already happening → queue request
   if (isRefreshing) {
-    const newToken = await new Promise((resolve) => subscribeTokenRefresh(resolve));
+    const newToken = await new Promise((resolve) =>
+      subscribeTokenRefresh(resolve)
+    );
     config.headers.Authorization = `Bearer ${newToken}`;
     return config;
   }
 
-  // Start refresh process
   isRefreshing = true;
   try {
     const { data } = await axios.post(
@@ -61,65 +50,43 @@ API.interceptors.request.use(async (config) => {
       { withCredentials: true }
     );
 
-    // Store new tokens
-    localStorage.setItem("accessToken", data.accessToken);
-    if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
+    const { accessToken: newAccess, refreshToken: newRefresh } = data;
 
-    accessToken = data.accessToken;
-    onRefreshed(accessToken);
+    localStorage.setItem("accessToken", newAccess);
+    if (newRefresh) localStorage.setItem("refreshToken", newRefresh);
+
+    onRefreshed(newAccess);
     isRefreshing = false;
 
-    config.headers.Authorization = `Bearer ${accessToken}`;
+    config.headers.Authorization = `Bearer ${newAccess}`;
     return config;
   } catch (err) {
     console.error("Token refresh failed:", err);
+    const refreshToken = localStorage.getItem("refreshToken");
+    const userId = localStorage.getItem("userId");
+
+    if (refreshToken && userId) {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {
+        id: userId,
+        token: refreshToken,
+      });
+    }
     localStorage.clear();
     isRefreshing = false;
     window.location.href = "/auth/login";
-    return Promise.reject(err);
+    throw err;
   }
 });
 
-// ---------------------
-// RESPONSE INTERCEPTOR
-// ---------------------
 API.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Handle unauthorized (access token invalid/expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if (!refreshToken) {
-        localStorage.clear();
-        window.location.href = "/auth/login";
-        return Promise.reject(error);
-      }
-
-      try {
-        const { data } = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/refresh`,
-          { token: refreshToken },
-          { withCredentials: true }
-        );
-
-        localStorage.setItem("accessToken", data.accessToken);
-        if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-        return API(originalRequest);
-      } catch (err) {
-        console.error("401 → Refresh failed:", err);
-        localStorage.clear();
-        window.location.href = "/auth/login";
-        return Promise.reject(err);
-      }
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 403 || err.response?.status === 401) {
+      console.warn("Unauthorized — forcing logout");
+      localStorage.clear();
+      window.location.href = "/auth/login";
     }
-
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 

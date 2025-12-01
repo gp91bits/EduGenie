@@ -23,11 +23,7 @@ const subjectNotesSchema = new mongoose.Schema(
         description: {
           type: String,
         },
-        fileType: {
-          type: String,
-          enum: ["pdf", "doc", "image"],
-          default: "pdf",
-        },
+    
         fileUrl: {
           type: String, 
           required: true,

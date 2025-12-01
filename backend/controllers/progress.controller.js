@@ -14,7 +14,6 @@ export const initSemesterProgress = async (req, res) => {
     const semId = parseInt(semesterId, 10);
     const newSubjectIds = subjects.map((s) => s.id);
 
-    
     const existingProgress = await Progress.find({
       studentId: userId,
       semesterId: semId,
@@ -22,7 +21,6 @@ export const initSemesterProgress = async (req, res) => {
 
     const existingIds = existingProgress.map((p) => p.subjectId);
 
-    
     const toAdd = newSubjectIds.filter((id) => !existingIds.includes(id));
 
     const toRemove = existingIds.filter((id) => !newSubjectIds.includes(id));
@@ -73,7 +71,6 @@ export const initSemesterProgress = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 // ----  compute completion for a subject ----
 const computeCompletion = ({
@@ -280,7 +277,6 @@ export const markNoteRead = async (req, res) => {
 };
 
 // ----  mark a lecture video as watched ----
-
 export const markLectureWatched = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -369,5 +365,57 @@ export const markLectureWatched = async (req, res) => {
   } catch (error) {
     console.error("markLectureWatched error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+// ---- Recalculate progress for a subject when admin updates notes ----
+export const recalcSubjectProgress = async (req, res) => {
+  try {
+    
+    const { subjectId, semesterId, totalNotes, totalLectures } = req.body;
+
+    if (!subjectId || !semesterId) {
+      return res.status(400).json({ message: "subjectId and semesterId required" });
+    }
+
+    const subjectIdNum = parseInt(subjectId, 10);
+    const semesterIdNum = parseInt(semesterId, 10);
+
+    // Fetch all students who have a progress doc for this subject
+    const records = await Progress.find({
+      subjectId: subjectIdNum,
+      semesterId: semesterIdNum,
+    });
+
+    const bulkOps = [];
+
+    for (const rec of records) {
+      const completion = computeCompletion({
+        totalNotes,
+        totalLectures,
+        notesCompletedCount: rec.notesCompleted?.length || 0,
+        videosCompletedCount: rec.videosCompleted?.length || 0,
+      });
+
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: rec._id },
+          update: {
+            $set: {
+              completion: completion ?? 0,
+              notesRead: rec.notesCompleted.length,
+              lecturesWatched: rec.videosCompleted.length,
+              lastUpdated: new Date(),
+            },
+          },
+        },
+      });
+    }
+
+    if (bulkOps.length > 0) await Progress.bulkWrite(bulkOps);
+
+    return res.status(200).json({ message: "Progress recalculated" });
+  } catch (err) {
+    console.error("recalcSubjectProgress error:", err);
+    return res.status(500).json({ message: "Internal error" });
   }
 };

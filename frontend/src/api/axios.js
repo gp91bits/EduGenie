@@ -56,22 +56,26 @@ API.interceptors.request.use(async (config) => {
     }
 
     if (isRefreshing) {
-      const newToken = await new Promise((resolve) =>
-        subscribeTokenRefresh(resolve)
-      );
+      const newToken = await new Promise((resolve) => subscribeTokenRefresh(resolve));
       config.headers.Authorization = `Bearer ${newToken}`;
       return config;
     }
 
     isRefreshing = true;
     try {
+      // Send clean refresh token - just the plain JWT string
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-        { token: refreshToken },
+        `${import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, "")}/auth/refresh`,
+        { refreshToken },
         { withCredentials: true }
       );
 
-      const { accessToken: newAccess, refreshToken: newRefresh } = data;
+      const newAccess = data?.accessToken || data?.token || data?.access_token;
+      const newRefresh = data?.refreshToken || data?.refresh_token || data?.refresh;
+
+      if (!newAccess) {
+        throw new Error("Refresh endpoint did not return access token");
+      }
 
       localStorage.setItem("accessToken", newAccess);
       if (newRefresh) localStorage.setItem("refreshToken", newRefresh);
@@ -82,18 +86,7 @@ API.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${newAccess}`;
       return config;
     } catch (err) {
-      console.error("Token refresh failed:", err.message);
-      const userId = localStorage.getItem("userId");
-
-      try {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {
-          id: userId,
-          token: refreshToken,
-        });
-      } catch (logoutErr) {
-        console.error("Logout request failed:", logoutErr);
-      }
-
+      console.error("Token refresh failed:", err?.response?.data || err.message || err);
       localStorage.clear();
       isRefreshing = false;
       window.location.href = "/auth/login";
@@ -101,20 +94,8 @@ API.interceptors.request.use(async (config) => {
     }
   } catch (error) {
     console.error("Request interceptor error:", error);
-    return config;
+    throw error;
   }
 });
-
-API.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 403 || err.response?.status === 401) {
-      console.warn("Unauthorized — forcing logout");
-      localStorage.clear();
-      window.location.href = "/auth/login";
-    }
-    return Promise.reject(err);
-  }
-);
 
 export default API;

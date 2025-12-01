@@ -76,7 +76,7 @@ Return ONLY the JSON array, no markdown code blocks or other text.`;
       text = String(result.output || '');
     }
     
-    console.log('Bytez raw output:', text);
+    // console.log('Bytez raw output:', text);
     
     // Clean up the response - remove markdown code blocks if present
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();

@@ -17,9 +17,10 @@ import {
   quizResults,
   quizHistory,
   profile,
+  admin,
 } from "./Routes/Routes";
 
-import { Home, Auth, Events, Maps, News, Notes, SubjectNotes, Quiz } from "./pages/index.pages";
+import { Home, Auth, Events, Maps, News, Notes, SubjectNotes, Quiz, Admin } from "./pages/index.pages";
 import Profile from "./pages/Profile";
 import CreateQuiz from "./components/quiz/CreateQuiz";
 import TakeQuiz from "./components/quiz/TakeQuiz";
@@ -69,6 +70,7 @@ function App() {
         <Route path={quizResults} element={<QuizResults />} />
         <Route path={quizHistory} element={<QuizHistory />} />
         <Route path={profile} element={<Profile />} />
+        <Route path={admin} element={<Admin />} />
       </Routes>
     </>
   );

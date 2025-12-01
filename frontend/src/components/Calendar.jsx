@@ -214,7 +214,7 @@ function Calendar({ refresh, className = "", showUpcoming = true, showHeader = t
               {events.slice(0, 4).map((task, index) => (
                 <li
                   key={index}
-                  className="p-2.5 rounded-lg bg-gradient-to-r from-purple-600/15 to-purple-800/15 
+                  className="p-2.5 rounded-lg bg-linear-to-r from-purple-600/15 to-purple-800/15 
                            border border-purple-500/20 hover:border-purple-500/40 
                            transition-all duration-200 hover:translate-x-0.5 cursor-pointer"
                 >

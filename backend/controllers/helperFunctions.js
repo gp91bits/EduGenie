@@ -26,19 +26,45 @@ export const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+
 // Refresh Tokens
 export const refreshToken = async (req, res) => {
-  const { token } = req.body;
-  if (!token) return res.status(401).json({ message: "Token required" });
-
   try {
-    const payload = jwt.verify(token, REFRESH_SECRET);
-    const user = await User.findById(payload.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // Get refresh token from request body (primary), fallback to cookies
+    let token = req.body?.refreshToken || req.cookies?.refreshToken;
 
-    // Check if token exists
-    if (!user.refreshTokens.includes(token)) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+    if (!token || typeof token !== "string") {
+      console.error("refreshToken: No token provided or invalid type");
+      return res.status(401).json({ message: "Missing refresh token" });
+    }
+
+    // Clean the token - remove whitespace and surrounding quotes if present
+    token = token.trim();
+    if ((token.startsWith('"') && token.endsWith('"')) || 
+        (token.startsWith("'") && token.endsWith("'"))) {
+      token = token.slice(1, -1);
+    }
+
+    // Verify the token
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error("refreshToken verification error:", err.message);
+      return res.status(401).json({ message: "Invalid or expired refresh token" });
+    }
+
+    // Find user
+    const user = await User.findById(payload.id);
+    if (!user) {
+      console.error("refreshToken: User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if token exists in user's refresh tokens
+    if (!user.refreshTokens || !user.refreshTokens.includes(token)) {
+      console.error("refreshToken: Token not found in user's token list");
+      return res.status(403).json({ message: "Refresh token not valid" });
     }
 
     // --- Rotate Refresh Token ---
@@ -47,10 +73,10 @@ export const refreshToken = async (req, res) => {
     // Remove the used refresh token
     user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
 
-    // Add the new one
+    // Add the new refresh token
     user.refreshTokens.push(newTokens.refreshToken);
 
-    // Optional: keep last 5 tokens to prevent accumulation
+    // Keep only the last 5 refresh tokens to prevent accumulation
     if (user.refreshTokens.length > 5) {
       user.refreshTokens = user.refreshTokens.slice(-5);
     }
@@ -61,9 +87,9 @@ export const refreshToken = async (req, res) => {
       accessToken: newTokens.accessToken,
       refreshToken: newTokens.refreshToken,
     });
-  } catch (err) {
-    console.error("refreshToken error:", err);
-    return res.status(403).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    console.error("refreshToken controller error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

@@ -3,7 +3,6 @@ import {
   getSemesterProgress,
   getSubjectProgress,
   getSubjectProgressById,
-  //   updateSubjectProgress,
   markNoteRead,
   markLectureWatched,
   initSemesterProgress,
@@ -11,16 +10,15 @@ import {
 
 const progressRoutes = express.Router();
 
-// Protect all routes
+// Initialize semester progress
 progressRoutes.post("/initSemester", initSemesterProgress);
 
+// Get progress data
 progressRoutes.get("/getSemesterProgress", getSemesterProgress);
 progressRoutes.get("/getSubjectProgress", getSubjectProgress);
-progressRoutes.get(
-  "/getSubjectProgressById/:subjectId",
-  getSubjectProgressById
-);
-// progressRoutes.put("/updateSubjectProgress/:subjectId", updateSubjectProgress);
+progressRoutes.get("/getSubjectProgressById/:subjectId", getSubjectProgressById);
+
+// Mark items as completed
 progressRoutes.post("/markNoteRead", markNoteRead);
 progressRoutes.post("/markLectureWatched", markLectureWatched);
 

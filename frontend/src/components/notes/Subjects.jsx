@@ -38,21 +38,35 @@ function Subjects() {
     return 1;
   }, []);
   useEffect(() => {
-    const loadSubjectProgress = async () => {
-      if (!studentId) {
-        setLoading(false);
-        return;
-      }
+    if (!studentId) {
+      setLoading(false);
+      return;
+    }
 
+    const load = async () => {
       setLoading(true);
-      const data = await fetchSubjectProgress(currentSemester);
 
+      const semSubjects = semesterData[currentSemester]?.subjects || [];
+      await initSemesterProgress(currentSemester, semSubjects);
+
+      const data = await fetchSubjectProgress(currentSemester);
       setSubjectsProgress(Array.isArray(data) ? data : []);
       setLoading(false);
     };
 
-    loadSubjectProgress();
+    load();
+
+    const onUpdated = (e) => {
+      const { semesterId: sId } = e?.detail || {};
+      if (!sId || String(sId) === String(currentSemester)) {
+        load();
+      }
+    };
+
+    window.addEventListener("subjectNotes:updated", onUpdated);
+    return () => window.removeEventListener("subjectNotes:updated", onUpdated);
   }, [studentId, currentSemester]);
+
   useEffect(() => {
     const semSubjects = semesterData[currentSemester]?.subjects || [];
     initSemesterProgress(currentSemester, semSubjects);
@@ -61,8 +75,9 @@ function Subjects() {
 
   const subjectsWithProgress = subjects.map((subject) => {
     const progressData = subjectsProgress.find(
-      (p) => p.subjectId === subject.id
+      (p) => String(p.subjectId) === String(subject.id)
     );
+
     return {
       ...subject,
       lectures: progressData?.videosCompleted?.length || 0,

@@ -153,7 +153,7 @@ function QuizResults() {
             </div>
             <div className="w-full bg-gray-700 rounded-full h-3">
               <div 
-                className="bg-gradient-to-r from-blue-600 to-green-600 h-3 rounded-full transition-all"
+                className="bg-linear-to-r from-blue-600 to-green-600 h-3 rounded-full transition-all"
                 style={{ width: `${results.score}%` }}
               ></div>
             </div>
@@ -183,7 +183,7 @@ function QuizResults() {
             <button
               onClick={handleSendEmail}
               disabled={emailSent || !shouldSendEmail || sendingEmail}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all"
+              className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all"
             >
               {sendingEmail ? "Sending..." : emailSent ? "Email Already Sent" : "Send Explanations"}
             </button>

@@ -93,7 +93,7 @@ function Dashboard() {
               </div>
               
               {/* Subject name - Always visible at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/80 to-transparent">
                 <h3 className="text-white font-semibold text-sm leading-tight">
                   {subject.name}
                 </h3>
@@ -131,7 +131,7 @@ function Dashboard() {
           {/* Quiz Card */}
           <Link
             to="/quiz"
-            className="group bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="group bg-linear-to-br from-purple-600 to-blue-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <div className="text-center text-white">
               <div className="text-4xl mb-4">🧠</div>
@@ -143,7 +143,7 @@ function Dashboard() {
           {/* Events Card */}
           <Link
             to="/events"
-            className="group bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="group bg-linear-to-br from-green-600 to-teal-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <div className="text-center text-white">
               <div className="text-4xl mb-4">📅</div>
@@ -155,7 +155,7 @@ function Dashboard() {
           {/* Learning Resources */}
           <Link
             to="/notes"
-            className="group bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="group bg-linear-to-br from-orange-600 to-red-600 rounded-2xl p-6 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <div className="text-center text-white">
               <div className="text-4xl mb-4">📚</div>

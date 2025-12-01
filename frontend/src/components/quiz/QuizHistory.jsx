@@ -268,7 +268,7 @@ function QuizHistory() {
         <div className="text-center mt-6 space-y-4">
           <button
             onClick={() => navigate("/quiz/create")}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all"
+            className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all"
           >
             Take a New Quiz
           </button>

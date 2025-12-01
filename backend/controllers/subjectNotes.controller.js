@@ -1,7 +1,95 @@
 import SubjectNotes from "../models/SubjectNotes.js";
+import Progress from "../models/Progress.js";
 import mongoose from "mongoose";
 
-// Get all notes/videos/quizzes for a subject
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Helper: get content counts for a subject
+const getContentCounts = async (subjectId, semesterId) => {
+  const content = await SubjectNotes.findOne({
+    subjectId: parseInt(subjectId),
+    semesterId: parseInt(semesterId),
+  });
+
+  if (!content) {
+    return { notes: 0, videos: 0 };
+  }
+
+  return {
+    notes: content.notes?.length || 0,
+    videos: content.videos?.length || 0,
+  };
+};
+
+// Helper: compute completion
+const computeCompletion = ({
+  totalNotes = 0,
+  totalLectures = 0,
+  notesCompletedCount = 0,
+  videosCompletedCount = 0,
+}) => {
+  const totalItems = totalNotes + totalLectures;
+  if (totalItems === 0) return 0;
+
+  const completed = notesCompletedCount + videosCompletedCount;
+  const raw = (completed / totalItems) * 100;
+
+  return Math.max(0, Math.min(100, Math.round(raw)));
+};
+
+// Helper: recalculate progress for all students in this subject
+const recalcProgressForSubject = async (subjectId, semesterId) => {
+  try {
+    const { notes: totalNotes, videos: totalLectures } = await getContentCounts(
+      subjectId,
+      semesterId
+    );
+
+    // Fetch all students with progress in this subject
+    const records = await Progress.find({
+      subjectId: parseInt(subjectId),
+      semesterId: parseInt(semesterId),
+    });
+
+    if (records.length === 0) return;
+
+    const bulkOps = records.map((rec) => {
+      const completion = computeCompletion({
+        totalNotes,
+        totalLectures,
+        notesCompletedCount: rec.notesCompleted?.length || 0,
+        videosCompletedCount: rec.videosCompleted?.length || 0,
+      });
+
+      return {
+        updateOne: {
+          filter: { _id: rec._id },
+          update: {
+            $set: {
+              completion,
+              notesRead: rec.notesCompleted?.length || 0,
+              lecturesWatched: rec.videosCompleted?.length || 0,
+              lastUpdated: new Date(),
+            },
+          },
+        },
+      };
+    });
+
+    if (bulkOps.length > 0) {
+      await Progress.bulkWrite(bulkOps);
+    }
+  } catch (err) {
+    console.error("recalcProgressForSubject error:", err);
+  }
+};
+
+// ============================================
+// GET CONTENT
+// ============================================
+
 export const getSubjectContent = async (req, res) => {
   try {
     const { subjectId, semesterId } = req.query;
@@ -36,7 +124,7 @@ export const getSubjectContent = async (req, res) => {
 };
 
 // ============================================
-// ADMIN ONLY OPERATIONS
+// ADMIN ONLY OPERATIONS - NOTES
 // ============================================
 
 export const addNote = async (req, res) => {
@@ -67,15 +155,18 @@ export const addNote = async (req, res) => {
 
     const newNote = {
       _id: new mongoose.Types.ObjectId(),
-      title,
-      description,
+      title: title.trim(),
+      description: description?.trim() || "",
       fileType: fileType || "pdf",
-      fileUrl,
+      fileUrl: fileUrl.trim(),
       uploadedAt: new Date(),
     };
 
     content.notes.push(newNote);
     await content.save();
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
 
     return res.status(201).json({
       message: "Note added successfully",
@@ -86,6 +177,91 @@ export const addNote = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const updateNote = async (req, res) => {
+  try {
+    const { subjectId, semesterId, noteId, title, description, fileUrl } =
+      req.body;
+
+    if (!subjectId || !semesterId || !noteId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Note ID required",
+      });
+    }
+
+    const content = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+        "notes._id": noteId,
+      },
+      {
+        $set: {
+          "notes.$[elem].title": title?.trim() || "",
+          "notes.$[elem].description": description?.trim() || "",
+          "notes.$[elem].fileUrl": fileUrl?.trim() || "",
+        },
+      },
+      {
+        arrayFilters: [{ "elem._id": noteId }],
+        new: true,
+      }
+    );
+
+    if (!content) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
+
+    return res.status(200).json({
+      message: "Note updated successfully",
+    });
+  } catch (error) {
+    console.error("updateNote error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteNote = async (req, res) => {
+  try {
+    const { subjectId, semesterId, noteId } = req.body;
+
+    if (!subjectId || !semesterId || !noteId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Note ID required",
+      });
+    }
+
+    const content = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+      },
+      { $pull: { notes: { _id: noteId } } },
+      { new: true }
+    );
+
+    if (!content) {
+      return res.status(404).json({ message: "Subject content not found" });
+    }
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
+
+    return res.status(200).json({
+      message: "Note deleted successfully",
+    });
+  } catch (error) {
+    console.error("deleteNote error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ============================================
+// ADMIN ONLY OPERATIONS - VIDEOS
+// ============================================
 
 export const addVideo = async (req, res) => {
   try {
@@ -115,15 +291,18 @@ export const addVideo = async (req, res) => {
 
     const newVideo = {
       _id: new mongoose.Types.ObjectId(),
-      title,
-      description,
-      youtubeUrl,
+      title: title.trim(),
+      description: description?.trim() || "",
+      youtubeUrl: youtubeUrl.trim(),
       duration: duration || "0:00",
       uploadedAt: new Date(),
     };
 
     content.videos.push(newVideo);
     await content.save();
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
 
     return res.status(201).json({
       message: "Video added successfully",
@@ -134,6 +313,92 @@ export const addVideo = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const updateVideo = async (req, res) => {
+  try {
+    const { subjectId, semesterId, videoId, title, description, youtubeUrl, duration } =
+      req.body;
+
+    if (!subjectId || !semesterId || !videoId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Video ID required",
+      });
+    }
+
+    const content = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+        "videos._id": videoId,
+      },
+      {
+        $set: {
+          "videos.$[elem].title": title?.trim() || "",
+          "videos.$[elem].description": description?.trim() || "",
+          "videos.$[elem].youtubeUrl": youtubeUrl?.trim() || "",
+          "videos.$[elem].duration": duration || "0:00",
+        },
+      },
+      {
+        arrayFilters: [{ "elem._id": videoId }],
+        new: true,
+      }
+    );
+
+    if (!content) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
+
+    return res.status(200).json({
+      message: "Video updated successfully",
+    });
+  } catch (error) {
+    console.error("updateVideo error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteVideo = async (req, res) => {
+  try {
+    const { subjectId, semesterId, videoId } = req.body;
+
+    if (!subjectId || !semesterId || !videoId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Video ID required",
+      });
+    }
+
+    const content = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+      },
+      { $pull: { videos: { _id: videoId } } },
+      { new: true }
+    );
+
+    if (!content) {
+      return res.status(404).json({ message: "Subject content not found" });
+    }
+
+    // Recalculate progress for all students
+    await recalcProgressForSubject(subjectId, semesterId);
+
+    return res.status(200).json({
+      message: "Video deleted successfully",
+    });
+  } catch (error) {
+    console.error("deleteVideo error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ============================================
+// ADMIN ONLY OPERATIONS - QUIZZES
+// ============================================
 
 export const addQuiz = async (req, res) => {
   try {
@@ -162,8 +427,8 @@ export const addQuiz = async (req, res) => {
 
     const newQuiz = {
       _id: new mongoose.Types.ObjectId(),
-      title,
-      description,
+      title: title.trim(),
+      description: description?.trim() || "",
       quizId: quizId || null,
       uploadedAt: new Date(),
     };
@@ -177,157 +442,6 @@ export const addQuiz = async (req, res) => {
     });
   } catch (error) {
     console.error("addQuiz error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const updateNote = async (req, res) => {
-  try {
-    const { subjectId, semesterId, noteId, title, description, fileUrl } =
-      req.body;
-
-    if (!subjectId || !semesterId || !noteId) {
-      return res.status(400).json({
-        message: "Subject ID, Semester ID, and Note ID required",
-      });
-    }
-
-    const content = await SubjectNotes.findOneAndUpdate(
-      {
-        subjectId: parseInt(subjectId),
-        semesterId: parseInt(semesterId),
-        "notes._id": noteId,
-      },
-      {
-        $set: {
-          "notes.$[elem].title": title,
-          "notes.$[elem].description": description,
-          "notes.$[elem].fileUrl": fileUrl,
-        },
-      },
-      {
-        arrayFilters: [{ "elem._id": noteId }],
-        new: true,
-      }
-    );
-
-    if (!content) {
-      return res.status(404).json({ message: "Note not found" });
-    }
-
-    return res.status(200).json({
-      message: "Note updated successfully",
-    });
-  } catch (error) {
-    console.error("updateNote error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const updateVideo = async (req, res) => {
-  try {
-    const { subjectId, semesterId, videoId, title, description, youtubeUrl, duration } =
-      req.body;
-
-    if (!subjectId || !semesterId || !videoId) {
-      return res.status(400).json({
-        message: "Subject ID, Semester ID, and Video ID required",
-      });
-    }
-
-    const content = await SubjectNotes.findOneAndUpdate(
-      {
-        subjectId: parseInt(subjectId),
-        semesterId: parseInt(semesterId),
-        "videos._id": videoId,
-      },
-      {
-        $set: {
-          "videos.$[elem].title": title,
-          "videos.$[elem].description": description,
-          "videos.$[elem].youtubeUrl": youtubeUrl,
-          "videos.$[elem].duration": duration,
-        },
-      },
-      {
-        arrayFilters: [{ "elem._id": videoId }],
-        new: true,
-      }
-    );
-
-    if (!content) {
-      return res.status(404).json({ message: "Video not found" });
-    }
-
-    return res.status(200).json({
-      message: "Video updated successfully",
-    });
-  } catch (error) {
-    console.error("updateVideo error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const deleteNote = async (req, res) => {
-  try {
-    const { subjectId, semesterId, noteId } = req.body;
-
-    if (!subjectId || !semesterId || !noteId) {
-      return res.status(400).json({
-        message: "Subject ID, Semester ID, and Note ID required",
-      });
-    }
-
-    const content = await SubjectNotes.findOneAndUpdate(
-      {
-        subjectId: parseInt(subjectId),
-        semesterId: parseInt(semesterId),
-      },
-      { $pull: { notes: { _id: noteId } } },
-      { new: true }
-    );
-
-    if (!content) {
-      return res.status(404).json({ message: "Subject content not found" });
-    }
-
-    return res.status(200).json({
-      message: "Note deleted successfully",
-    });
-  } catch (error) {
-    console.error("deleteNote error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const deleteVideo = async (req, res) => {
-  try {
-    const { subjectId, semesterId, videoId } = req.body;
-
-    if (!subjectId || !semesterId || !videoId) {
-      return res.status(400).json({
-        message: "Subject ID, Semester ID, and Video ID required",
-      });
-    }
-
-    const content = await SubjectNotes.findOneAndUpdate(
-      {
-        subjectId: parseInt(subjectId),
-        semesterId: parseInt(semesterId),
-      },
-      { $pull: { videos: { _id: videoId } } },
-      { new: true }
-    );
-
-    if (!content) {
-      return res.status(404).json({ message: "Subject content not found" });
-    }
-
-    return res.status(200).json({
-      message: "Video deleted successfully",
-    });
-  } catch (error) {
-    console.error("deleteVideo error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

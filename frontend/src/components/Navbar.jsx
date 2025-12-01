@@ -70,7 +70,7 @@ function Navbar() {
       <div
         className={`fixed top-0 left-0 h-screen w-72 transition-all duration-300 z-40
            ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-           bg-gradient-to-b from-purple-600 via-purple-700 to-purple-900
+           bg-linear-to-b from-purple-600 via-purple-700 to-purple-900
            flex flex-col text-white shadow-2xl`}
       >
         {/* Logo Section */}

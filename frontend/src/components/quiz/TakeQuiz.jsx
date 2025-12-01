@@ -233,7 +233,7 @@ function TakeQuiz() {
           <button
             onClick={handleSubmitQuiz}
             disabled={isSubmitting}
-            className="w-full mt-8 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all"
+            className="w-full mt-8 bg-linear-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all"
           >
             {isSubmitting ? "Submitting..." : "Submit Quiz"}
           </button>

@@ -31,12 +31,19 @@ export const createEvent = async (req, res) => {
 
 export const getEvents = async (req, res) => {
   try {
-    const userId = req.user?.id; 
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const events = await Event.find({ userId }).sort({ date: 1 }); 
+    // Include user's events AND global/admin events (where userId is null or missing)
+    const events = await Event.find({
+      $or: [
+        { userId: userId },
+        { userId: { $exists: false } },
+        { userId: null },
+      ],
+    }).sort({ date: 1 });
 
     return res.status(200).json({ events });
   } catch (error) {

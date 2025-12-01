@@ -312,12 +312,12 @@ function Profile() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-6xl mx-auto">
             {/* Profile Header */}
-            <div className="bg-gradient-to-r from-purple-900/40 via-bg-1 to-bg-1 rounded-2xl p-8 mb-6 border border-white/10">
+            <div className="bg-linear-to-r from-purple-900/40 via-bg-1 to-bg-1 rounded-2xl p-8 mb-6 border border-white/10">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar with Picture Menu */}
                 <div className="relative" ref={pictureMenuRef}>
                   <div 
-                    className="w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-xl shadow-purple-500/20 cursor-pointer group overflow-hidden"
+                    className="w-28 h-28 bg-linear-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-xl shadow-purple-500/20 cursor-pointer group overflow-hidden"
                     onClick={() => setShowPictureMenu(!showPictureMenu)}
                   >
                     {uploadingPicture ? (

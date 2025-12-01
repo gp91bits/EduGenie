@@ -106,9 +106,7 @@ export const logout = async (req, res) => {
 
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-console.log(
-  token,id
-)
+
     user.refreshTokens = user.refreshTokens.filter(t => t !== token);
     await user.save();
 

@@ -221,7 +221,7 @@ function CreateQuiz() {
               <button
                 type="submit"
                 disabled={loading || !formData.topic.trim() || !formData.numberOfQuestions || !formData.timeLimit}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200"
+                className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200"
               >
                 {loading ? "Creating Quiz..." : "Start Quiz"}
               </button>

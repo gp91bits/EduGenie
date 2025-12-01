@@ -11,6 +11,11 @@ import EventsPage from "./EventsPage";
 import Progress from "./notes/Progress";
 import Subjects from "./notes/Subjects";
 import SingleNotes from "./notes/SingleNotes";
+import AdminNews from "./admin/AdminNews";
+import AdminNotes from "./admin/AdminNotes";
+import AdminEvent from "./admin/AdminEvent";
+import AdminHeader from "./admin/AdminHeader";
+import AdminNavbar from "./admin/AdminNavbar";
 export {
   Signup,
   Login,
@@ -25,4 +30,9 @@ export {
   Progress,
   Subjects,
   SingleNotes,
+  AdminEvent,
+  AdminNews,
+  AdminNotes,
+  AdminHeader,
+  AdminNavbar
 };

@@ -33,7 +33,7 @@ function Quiz() {
               <p className="text-gray-300 mb-6">
                 Start a personalized quiz on any topic with customizable questions and time limits
               </p>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform group-hover:scale-105">
+              <button className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform group-hover:scale-105">
                 Start Quiz
               </button>
             </div>
@@ -48,7 +48,7 @@ function Quiz() {
               <p className="text-gray-300 mb-6">
                 Review your past quiz attempts, scores, and track your learning progress over time
               </p>
-              <button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform group-hover:scale-105">
+              <button className="bg-linear-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform group-hover:scale-105">
                 View History
               </button>
             </div>

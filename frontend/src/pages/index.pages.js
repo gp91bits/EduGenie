@@ -6,4 +6,5 @@ import News from "./News";
 import Notes from "./Notes";
 import SubjectNotes from "./SubjectNotes";
 import Quiz from "./Quiz";
-export { Auth, Home, Events, Maps, News, Notes, SubjectNotes, Quiz };
+import Admin from "./Admin";
+export { Auth, Home, Events, Maps, News, Notes, SubjectNotes, Quiz, Admin };

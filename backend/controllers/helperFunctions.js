@@ -3,18 +3,28 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import otpGenerator from "otp-generator";
 import User from "../models/Users.js";
+import Notification from "../models/Notification.js";
+
 import {
   createMailOptions,
   otpEmailTemplate,
   transporter,
 } from "../conf/mail.conf.js";
+
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
-// Generate Tokens
+// ----------------------------
+//  TOKEN GENERATION
+// ----------------------------
 export const generateTokens = (user) => {
   const accessToken = jwt.sign(
-    { id: user._id, email: user.email, name: user.name, semester: user.semester },
+    {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      semester: user.semester,
+    },
     JWT_SECRET,
     { expiresIn: "30m" }
   );
@@ -26,57 +36,57 @@ export const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
-
-// Refresh Tokens
+// ----------------------------
+//  REFRESH TOKEN CONTROLLER
+// ----------------------------
 export const refreshToken = async (req, res) => {
   try {
-    // Get refresh token from request body (primary), fallback to cookies
     let token = req.body?.refreshToken || req.cookies?.refreshToken;
-
     if (!token || typeof token !== "string") {
-      console.error("refreshToken: No token provided or invalid type");
       return res.status(401).json({ message: "Missing refresh token" });
     }
 
-    // Clean the token - remove whitespace and surrounding quotes if present
     token = token.trim();
-    if ((token.startsWith('"') && token.endsWith('"')) || 
-        (token.startsWith("'") && token.endsWith("'"))) {
+
+    
+    if (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    ) {
       token = token.slice(1, -1);
     }
 
-    // Verify the token
+    
     let payload;
     try {
-      payload = jwt.verify(token, process.env.JWT_SECRET);
+      payload = jwt.verify(token, REFRESH_SECRET);
     } catch (err) {
       console.error("refreshToken verification error:", err.message);
-      return res.status(401).json({ message: "Invalid or expired refresh token" });
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired refresh token" });
     }
 
     // Find user
     const user = await User.findById(payload.id);
     if (!user) {
-      console.error("refreshToken: User not found");
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if token exists in user's refresh tokens
+   
     if (!user.refreshTokens || !user.refreshTokens.includes(token)) {
-      console.error("refreshToken: Token not found in user's token list");
       return res.status(403).json({ message: "Refresh token not valid" });
     }
 
-    // --- Rotate Refresh Token ---
     const newTokens = generateTokens(user);
 
-    // Remove the used refresh token
+  
     user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
 
-    // Add the new refresh token
+    
     user.refreshTokens.push(newTokens.refreshToken);
 
-    // Keep only the last 5 refresh tokens to prevent accumulation
+    
     if (user.refreshTokens.length > 5) {
       user.refreshTokens = user.refreshTokens.slice(-5);
     }
@@ -93,22 +103,25 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-
-// EMAIL
-
+// ----------------------------
+//  EMAIL OTP
+// ----------------------------
 const sendOtpEmail = async (email, otp) => {
   const html = otpEmailTemplate(otp);
   const mailOptions = createMailOptions(email, html);
   await transporter.sendMail(mailOptions);
 };
 
-// USER HELPERS
+// ----------------------------
+// CHECK IF USER EXISTS
+// ----------------------------
 export const checkUserExists = async (email) => {
-  const user = await User.findOne({ email: email.toLowerCase() });
-  return user;
+  return await User.findOne({ email: email.toLowerCase() });
 };
 
-// SEND OTP
+// ----------------------------
+//   SEND OTP
+// ----------------------------
 export const sendOtp = async (user, type = "signup") => {
   try {
     const { name, email, password, semester } = user;
@@ -141,6 +154,7 @@ export const sendOtp = async (user, type = "signup") => {
       await redis.setex(`otp:${email}`, 300, otp); // 5 min expiry
     }
 
+    // Store temporary data
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -160,7 +174,9 @@ export const sendOtp = async (user, type = "signup") => {
   }
 };
 
-//RESEND OTP
+// ----------------------------
+//  RESEND OTP
+// ----------------------------
 export const resendOtp = async (req, res) => {
   try {
     const { email, type } = req.body;
@@ -171,7 +187,6 @@ export const resendOtp = async (req, res) => {
         .json({ success: false, message: "Email and type required" });
     }
 
-    // Check user existence based on type
     const exists = await checkUserExists(email);
     if (type === "signup" && exists) {
       return res
@@ -184,9 +199,7 @@ export const resendOtp = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    // Call existing sendOtp function
     const result = await sendOtp({ email }, type);
-
     return res.status(result.status).json(result);
   } catch (err) {
     console.error("resendOtp error:", err);
@@ -196,7 +209,9 @@ export const resendOtp = async (req, res) => {
   }
 };
 
-// VERIFY OTP
+// ----------------------------
+//  VERIFY OTP
+// ----------------------------
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp, type } = req.body;
@@ -205,22 +220,20 @@ export const verifyOtp = async (req, res) => {
     if (!storedOtp || storedOtp.toString() !== otp.toString()) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+
     if (type === "signup") {
       const tempUserData = await redis.get(`tempUser:${email}`);
       if (!tempUserData)
         return res.status(400).json({ message: "Session expired" });
 
-      const userData = tempUserData;
+      const userData = tempUserData
 
-      // Create the user
-      const newUser = new User(userData); // create a Mongoose document
+      const newUser = new User(userData);
       const { accessToken, refreshToken } = generateTokens(newUser);
 
-      // Save the refresh token to user
       newUser.refreshTokens = [refreshToken];
       await newUser.save();
 
-      // Cleanup Redis
       await redis.del(`otp:${email}`);
       await redis.del(`tempUser:${email}`);
 
@@ -242,7 +255,7 @@ export const verifyOtp = async (req, res) => {
       if (!tempUserData)
         return res.status(400).json({ message: "Session expired" });
 
-      const { password } = tempUserData;
+      const { password } = tempUserData
       const user = await User.findOne({ email });
       if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -259,4 +272,26 @@ export const verifyOtp = async (req, res) => {
     console.error("verifyOtp error:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+// ----------------------------
+//  GLOBAL NOTIFICATION CREATOR
+// ----------------------------
+export const createNotification = async (opts = {}) => {
+  const { category, title, msg, actionUrl = null, metadata = {} } = opts;
+
+  if (!category || !["event", "news", "notes"].includes(category)) {
+    throw new Error("Invalid notification category");
+  }
+  if (!title || !msg) {
+    throw new Error("title and msg required");
+  }
+
+  return await Notification.create({
+    category,
+    title,
+    msg,
+    actionUrl,
+    metadata,
+  });
 };

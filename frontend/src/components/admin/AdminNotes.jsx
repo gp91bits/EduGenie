@@ -318,7 +318,7 @@ function AdminNotes() {
   };
 
   return (
-    <div id="adminNotes" className="w-full min-h-screen pt-20 bg-bg py-10 px-4 sm:px-8">
+    <div id="addNotes" className="w-full min-h-screen pt-20 bg-bg py-10 px-4 sm:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-white">Admin - Subject Notes</h2>

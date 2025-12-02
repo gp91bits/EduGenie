@@ -37,25 +37,19 @@ export default function Login() {
         password: formData.password,
       });
 
-      // adjust to your response shape
-      const token = res?.data?.accessToken 
-      const user = res?.data?.user 
+      const accessToken = res?.data?.accessToken;
+      const refreshToken = res?.data?.refreshToken;
+      const user = res?.data?.user;
 
-      if (!token) {
-        setError("Login succeeded but server did not return a token.");
+      if (!accessToken || !refreshToken) {
+        setError("Login response missing tokens.");
         return;
       }
 
-      // persist token + user
-      localStorage.setItem("accessToken", token);
-      if (user) localStorage.setItem("user", JSON.stringify(user));
 
-      // ensure axios instance sends Authorization on all requests
-      API.defaults.headers = API.defaults.headers || {};
-      API.defaults.headers.common = API.defaults.headers.common || {};
-      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+      dispatch(login({ user, accessToken, refreshToken }));
 
-      dispatch(login({ user, accessToken: token }));
       const admins = import.meta.env.VITE_ADMIN.split(",").map((s) => s.trim());
       if (admins.includes(user.email)) {
         setTimeout(() => navigate("/admin#addNotes"), 0);

@@ -7,4 +7,17 @@ import Notes from "./Notes";
 import SubjectNotes from "./SubjectNotes";
 import Quiz from "./Quiz";
 import Admin from "./Admin";
-export { Auth, Home, Events, Maps, News, Notes, SubjectNotes, Quiz, Admin };
+import NotificationPage from "./NotificationPage";
+
+export {
+  Auth,
+  Home,
+  Events,
+  Maps,
+  News,
+  Notes,
+  SubjectNotes,
+  Quiz,
+  Admin,
+  NotificationPage,
+};

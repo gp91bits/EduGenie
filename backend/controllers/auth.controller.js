@@ -42,17 +42,21 @@ export const login = async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
-    
+
     // Calculate streak based on daily login
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     if (user.lastLoginDate) {
       const lastLogin = new Date(user.lastLoginDate);
-      const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+      const lastLoginDay = new Date(
+        lastLogin.getFullYear(),
+        lastLogin.getMonth(),
+        lastLogin.getDate()
+      );
       const diffTime = today.getTime() - lastLoginDay.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 1) {
         // Consecutive day login - increment streak
         user.streak = (user.streak || 0) + 1;
@@ -65,14 +69,14 @@ export const login = async (req, res) => {
       // First login ever
       user.streak = 1;
     }
-    
+
     // Update best streak if current streak is higher
     if (user.streak > (user.bestStreak || 0)) {
       user.bestStreak = user.streak;
     }
-    
+
     user.lastLoginDate = now;
-    
+
     const { accessToken, refreshToken } = generateTokens(user);
     user.refreshTokens.push(refreshToken);
 
@@ -99,15 +103,30 @@ export const login = async (req, res) => {
 // Logout
 export const logout = async (req, res) => {
   try {
-    const { id, token } = req.body;
+    let { id, token } = req.body;
 
-    if (!id || !token)
+    if (!id || !token) {
       return res.status(200).json({ message: "Already logged out" });
+    }
+
+    token = token.trim();
+    if (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    ) {
+      token = token.slice(1, -1);
+    }
 
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.refreshTokens = user.refreshTokens.filter(t => t !== token);
+    const beforeCount = user.refreshTokens.length;
+    user.refreshTokens = user.refreshTokens.filter((t) => t === token);
+
+    if (beforeCount === user.refreshTokens.length) {
+      user.refreshTokens = [];
+    }
+
     await user.save();
 
     return res.status(200).json({ message: "Logged out successfully" });
@@ -116,5 +135,3 @@ export const logout = async (req, res) => {
     return res.status(500).json({ message: "Logout failed" });
   }
 };
-
-

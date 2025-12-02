@@ -16,6 +16,7 @@ import progressRoutes from "./routes/progress.routes.js";
 import subjectNotesRoutes from "./routes/subjectsNotes.routes.js";
 import isAdmin from "./middleware/admin.js";
 import adminRoutes from "./routes/admin.routes.js";
+import notificationsRoutes from "./routes/notifications.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,9 +56,10 @@ app.use("/api/user", userRoutes);
 app.use("/api/progress", authMiddleware, progressRoutes);
 app.use("/api/subjectNotes",  authMiddleware, subjectNotesRoutes);
 app.use("/api/admin",  authMiddleware, adminRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
-const frontendPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendPath));
+// const frontendPath = path.join(__dirname, "../frontend/dist");
+// app.use(express.static(frontendPath));
 
 // app.get(/.*/, (req, res) => {
 //   res.sendFile(path.join(frontendPath, "index.html"));

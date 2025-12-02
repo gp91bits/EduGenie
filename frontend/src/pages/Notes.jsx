@@ -8,8 +8,8 @@ function Notes() {
 
       {/* Main Content Area */}
       <div className="flex-1  transition-all duration-300">
-        <div className="p-10 rounded-lg gap-5 flex flex-col h-full overflow-auto">
           <HeaderBar />
+        <div className="p-10 rounded-lg gap-5 flex flex-col h-full overflow-auto">
           <Progress />
           <Subjects />
         </div>

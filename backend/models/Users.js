@@ -29,7 +29,6 @@ const userSchema = new mongoose.Schema(
     refreshTokens: {
       type: [String],
       default: [],
-      // validate: [(arr) => arr.length <= 5, "Too many active sessions"],
     },
     streak: {
       type: Number,
@@ -43,9 +42,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // store picture in DB as binary + MIME type
     profilePicture: {
-      type: String,
-      default: null,
+      data: { type: Buffer, default: null },
+      contentType: { type: String, default: null },
     },
   },
   { timestamps: true }

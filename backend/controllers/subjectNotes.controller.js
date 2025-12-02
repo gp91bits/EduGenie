@@ -1,12 +1,12 @@
 import SubjectNotes from "../models/SubjectNotes.js";
 import Progress from "../models/Progress.js";
 import mongoose from "mongoose";
+import { createNotification } from "./helperFunctions.js";
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-// Helper: get content counts for a subject
 const getContentCounts = async (subjectId, semesterId) => {
   const content = await SubjectNotes.findOne({
     subjectId: parseInt(subjectId),
@@ -23,7 +23,6 @@ const getContentCounts = async (subjectId, semesterId) => {
   };
 };
 
-// Helper: compute completion
 const computeCompletion = ({
   totalNotes = 0,
   totalLectures = 0,
@@ -39,7 +38,6 @@ const computeCompletion = ({
   return Math.max(0, Math.min(100, Math.round(raw)));
 };
 
-// Helper: recalculate progress for all students in this subject
 const recalcProgressForSubject = async (subjectId, semesterId) => {
   try {
     const { notes: totalNotes, videos: totalLectures } = await getContentCounts(
@@ -165,8 +163,19 @@ export const addNote = async (req, res) => {
     content.notes.push(newNote);
     await content.save();
 
-    // Recalculate progress for all students
     await recalcProgressForSubject(subjectId, semesterId);
+
+    createNotification({
+      category: "notes",
+      title: `New Note Added: ${title}`,
+      msg: `A new note has been uploaded in Semester ${semesterId}, Subject ${subjectId}.`,
+      actionUrl: `/subjects/${subjectId}/notes`,
+      metadata: {
+        subjectId,
+        semesterId,
+        type: "note",
+      },
+    }).catch(console.error);
 
     return res.status(201).json({
       message: "Note added successfully",
@@ -301,8 +310,19 @@ export const addVideo = async (req, res) => {
     content.videos.push(newVideo);
     await content.save();
 
-    // Recalculate progress for all students
     await recalcProgressForSubject(subjectId, semesterId);
+
+    createNotification({
+      category: "notes",
+      title: `New Video Added: ${title}`,
+      msg: `A new video has been uploaded in Semester ${semesterId}, Subject ${subjectId}.`,
+      actionUrl: `/subjects/${subjectId}/videos`,
+      metadata: {
+        subjectId,
+        semesterId,
+        type: "video",
+      },
+    }).catch(console.error);
 
     return res.status(201).json({
       message: "Video added successfully",
@@ -316,8 +336,15 @@ export const addVideo = async (req, res) => {
 
 export const updateVideo = async (req, res) => {
   try {
-    const { subjectId, semesterId, videoId, title, description, youtubeUrl, duration } =
-      req.body;
+    const {
+      subjectId,
+      semesterId,
+      videoId,
+      title,
+      description,
+      youtubeUrl,
+      duration,
+    } = req.body;
 
     if (!subjectId || !semesterId || !videoId) {
       return res.status(400).json({

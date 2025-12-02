@@ -22,12 +22,12 @@ function Admin() {
   }, []);
 
   return (
-    <div className="bg-bg h-screen w-screen">
+    <div className="bg-bg h-screen w-screen overflow-hidden">
       <AdminNavbar />
       <AdminHeader />
       <AdminNotes />
-      <AdminNews />
       <AdminEvent />
+      <AdminNews />
     </div>
   );
 }

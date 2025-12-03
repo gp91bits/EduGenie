@@ -16,6 +16,8 @@ import AdminNotes from "./admin/AdminNotes";
 import AdminEvent from "./admin/AdminEvent";
 import AdminHeader from "./admin/AdminHeader";
 import AdminNavbar from "./admin/AdminNavbar";
+import AdminDashboard from "./admin/AdminDashboard";
+import AdminUsers from "./admin/AdminUsers";
 export {
   Signup,
   Login,
@@ -34,5 +36,7 @@ export {
   AdminNews,
   AdminNotes,
   AdminHeader,
-  AdminNavbar
+  AdminNavbar,
+  AdminDashboard,
+  AdminUsers,
 };

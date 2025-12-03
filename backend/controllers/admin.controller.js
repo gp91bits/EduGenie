@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import News from "../models/News.js";
 import Event from "../models/Events.js";
+import User from "../models/Users.js";
 import { createNotification } from "./helperFunctions.js";
 
 // ------------------------------
@@ -118,7 +119,7 @@ export const updateNews = async (req, res) => {
     const updatePayload = {};
     if (typeof headline === "string") updatePayload.headline = headline.trim();
     if (typeof news === "string") updatePayload.news = news.trim();
-   
+
 
     const updated = await News.findByIdAndUpdate(id, updatePayload, { new: true });
     if (!updated) {
@@ -225,4 +226,121 @@ export const deleteEvent = async (req, res) => {
       .json({ success: false, message: "Failed to delete event" });
   }
 };
+
+// ------------------------------
+// GET ALL USERS
+// ------------------------------
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password -refreshTokens').sort({ createdAt: -1 });
+
+    const usersWithStats = users.map(user => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      semester: user.semester,
+      streak: user.streak || 0,
+      bestStreak: user.bestStreak || 0,
+      lastLoginDate: user.lastLoginDate,
+      blocked: user.blocked || false,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }));
+
+    return res.status(200).json({ success: true, users: usersWithStats });
+  } catch (err) {
+    console.error("getAllUsers error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch users" });
+  }
+};
+
+// ------------------------------
+// DELETE USER
+// ------------------------------
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user id" });
+    }
+
+    const removed = await User.findByIdAndDelete(id);
+    if (!removed) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+      user: {
+        _id: removed._id,
+        name: removed.name,
+        email: removed.email,
+      },
+    });
+  } catch (err) {
+    console.error("deleteUser error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to delete user" });
+  }
+};
+
+// ------------------------------
+// BLOCK/UNBLOCK USER
+// ------------------------------
+export const blockUnblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { blocked } = req.body;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user id" });
+    }
+
+    if (typeof blocked !== "boolean") {
+      return res
+        .status(400)
+        .json({ success: false, message: "blocked must be a boolean" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { blocked },
+      { new: true }
+    ).select('-password -refreshTokens');
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `User ${blocked ? "blocked" : "unblocked"} successfully`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        blocked: user.blocked,
+      },
+    });
+  } catch (error) {
+    console.error("blockUnblockUser error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to block/unblock user" });
+  }
+};
+
 

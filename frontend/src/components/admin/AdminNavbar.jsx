@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   User,
+  BarChart3,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -19,6 +20,8 @@ function AdminNavbar() {
 
   // use section id instead of embedding hashes in path
   const navItems = [
+    { name: "Dashboard", id: "adminDashboard", icon: BarChart3 },
+    { name: "Users", id: "adminUsers", icon: User },
     { name: "Notes", id: "addNotes", icon: Brain },
     { name: "Events", id: "addEvents", icon: Calendar },
     { name: "News", id: "addNews", icon: Newspaper },
@@ -30,7 +33,7 @@ function AdminNavbar() {
     // Active when on /admin and hash matches the section id.
     if (location.pathname !== "/admin") return false;
     if (location.hash === `#${id}`) return true;
-    
+
     if (!location.hash && id === "adminNotes") return true;
     return false;
   };
@@ -58,11 +61,10 @@ function AdminNavbar() {
       {/* Hamburger Menu Button - Fixed position, always visible */}
       <button
         onClick={toggleMenu}
-        className={`fixed top-3 left-3 z-50 p-2.5 rounded-xl transition-all duration-300 shadow-lg ${
-          isOpen
+        className={`fixed top-3 left-3 z-50 p-2.5 rounded-xl transition-all duration-300 shadow-lg ${isOpen
             ? "bg-white text-purple-700"
             : "bg-purple-600 text-white hover:bg-purple-700 hover:scale-105"
-        }`}
+          }`}
         aria-label="Toggle menu"
       >
         {isOpen ? (
@@ -105,11 +107,10 @@ function AdminNavbar() {
                   <button
                     className={`w-full flex items-center gap-4 text-left font-medium py-3.5 px-4 rounded-xl
                              transition-all duration-200 cursor-pointer
-                             ${
-                               active
-                                 ? "bg-white text-purple-700 shadow-lg"
-                                 : "hover:bg-white/10 text-white/90 hover:text-white hover:translate-x-1"
-                             }`}
+                             ${active
+                        ? "bg-white text-purple-700 shadow-lg"
+                        : "hover:bg-white/10 text-white/90 hover:text-white hover:translate-x-1"
+                      }`}
                     onClick={() => goToSection(item.id)}
                   >
                     <Icon size={22} strokeWidth={active ? 2.5 : 2} />

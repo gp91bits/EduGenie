@@ -23,10 +23,14 @@ const subjectNotesSchema = new mongoose.Schema(
         description: {
           type: String,
         },
-    
+
         fileUrl: {
-          type: String, 
+          type: String,
           required: true,
+        },
+        isHidden: {
+          type: Boolean,
+          default: false,
         },
         uploadedAt: {
           type: Date,
@@ -48,8 +52,12 @@ const subjectNotesSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        isHidden: {
+          type: Boolean,
+          default: false,
+        },
         duration: {
-          type: String, 
+          type: String,
         },
         uploadedAt: {
           type: Date,

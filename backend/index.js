@@ -35,11 +35,18 @@ const app = express();
 // reset Core Middleware reset
 app.use(cookieParser());
 app.use(express.json());
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
+// CORS configuration - accept any localhost port
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: function (origin, callback) {
+      // Allow all localhost origins (http://localhost:any-port)
+      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -54,8 +61,8 @@ app.use("/api/task", authMiddleware, taskRoutes);
 app.use("/api/quiz", authMiddleware, quizRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/progress", authMiddleware, progressRoutes);
-app.use("/api/subjectNotes",  authMiddleware, subjectNotesRoutes);
-app.use("/api/admin",  authMiddleware, adminRoutes);
+app.use("/api/subjectNotes", authMiddleware, subjectNotesRoutes);
+app.use("/api/admin", authMiddleware, adminRoutes);
 app.use("/api/notifications", notificationsRoutes);
 
 // const frontendPath = path.join(__dirname, "../frontend/dist");

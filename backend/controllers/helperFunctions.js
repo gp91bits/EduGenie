@@ -48,7 +48,7 @@ export const refreshToken = async (req, res) => {
 
     token = token.trim();
 
-    
+
     if (
       (token.startsWith('"') && token.endsWith('"')) ||
       (token.startsWith("'") && token.endsWith("'"))
@@ -56,7 +56,7 @@ export const refreshToken = async (req, res) => {
       token = token.slice(1, -1);
     }
 
-    
+
     let payload;
     try {
       payload = jwt.verify(token, REFRESH_SECRET);
@@ -73,20 +73,20 @@ export const refreshToken = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-   
+
     if (!user.refreshTokens || !user.refreshTokens.includes(token)) {
       return res.status(403).json({ message: "Refresh token not valid" });
     }
 
     const newTokens = generateTokens(user);
 
-  
+
     user.refreshTokens = user.refreshTokens.filter((t) => t !== token);
 
-    
+
     user.refreshTokens.push(newTokens.refreshToken);
 
-    
+
     if (user.refreshTokens.length > 5) {
       user.refreshTokens = user.refreshTokens.slice(-5);
     }
@@ -255,7 +255,8 @@ export const verifyOtp = async (req, res) => {
       if (!tempUserData)
         return res.status(400).json({ message: "Session expired" });
 
-      const { password } = tempUserData
+      const parsedData = JSON.parse(tempUserData);
+      const { password } = parsedData;
       const user = await User.findOne({ email });
       if (!user) return res.status(404).json({ message: "User not found" });
 

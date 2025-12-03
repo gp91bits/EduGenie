@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { LogOut, User, Calendar,} from "lucide-react";
+import { LogOut, User, Calendar, } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -10,8 +10,8 @@ function AdminHeader() {
   const navigate = useNavigate();
   const userData = useSelector((state) => state.auth.userData);
 
-  
- 
+
+
 
 
 
@@ -85,51 +85,42 @@ function AdminHeader() {
   return (
     <div className="fixed top-0 z-20 w-screen">
       {/* Main Header */}
-      <div className=" bg-linear-to-r from-purple-900/40 via-bg-2 to-bg-1 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between h-16 px-4">
+      <div className="bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500 shadow-lg border-b border-purple-400/20">
+        <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           {/* Left Section - with padding for hamburger menu */}
           <div className="flex items-center gap-6 pl-14">
             <div className="hidden sm:block">
-              <h2 className="text-white font-semibold text-lg">
-                Welcome back, <span className="text-purple-400">{userData?.name || "User"}</span> 👋
+              <h2 className="text-white font-bold text-lg">
+                Welcome back, <span className="text-yellow-200">{userData?.name || "User"}</span> 👋
               </h2>
-              <p className="text-gray-400 text-xs flex items-center gap-1">
+              <p className="text-white/80 text-xs flex items-center gap-1 mt-0.5">
                 <Calendar size={12} />
                 {currentDate}
               </p>
             </div>
-            
-         
           </div>
-
-        
 
           {/* Right Section - Action Buttons */}
-          <div className="flex items-center gap-2">
-             <div className="hidden md:flex items-center gap-2 bg-bg-1/50 px-4 py-2 rounded-xl border border-white/10">
-            <div className="text-2xl font-bold text-white font-mono tracking-wider">
-              {currentTime}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-lg border border-white/20 hover:bg-white/20 transition-all">
+              <div className="text-lg font-bold text-white font-mono tracking-wider">
+                {currentTime}
+              </div>
             </div>
-          </div>
-       
-            
-            <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
-            
+
+            <div className="w-px h-8 bg-white/20"></div>
+
             <button
-              className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-xl transition-all duration-200"
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all duration-200 font-medium text-sm"
               onClick={handleLogout}
               title="Logout"
             >
               <LogOut size={18} />
-              <span className="hidden sm:inline text-sm font-medium">Logout</span>
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </div>
-      
-  
-      
-  
     </div>
   );
 }

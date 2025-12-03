@@ -105,71 +105,68 @@ export default function AdminNews() {
   return (
     <div
       id="addNews"
-      className="w-full min-h-screen bg-bg pt-20 px-4 sm:px-6 lg:px-12 flex items-start justify-center"
+      className="w-full min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pt-20 pb-10 px-4 sm:px-6 lg:px-12 flex items-start justify-center"
     >
       <div className="w-full max-w-3xl">
 
         {/* Heading */}
-        <div className="mb-6">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">
+        <div className="mb-8">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
             Manage News
           </h2>
-          <p className="text-sm sm:text-base text-slate-400 mt-2">
-            Create, update, or delete news items. Users will see these in the dashboard.
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
+            Create, update, or delete news items. Users will see these in their dashboard.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-bg-2 p-6 sm:p-8 md:p-10 rounded-xl border border-slate-700 shadow-xl">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 sm:p-8">
 
           {/* Status message */}
           {message && (
             <div
-              className={`mb-6 px-4 py-3 rounded-md ${
-                message.type === "success" ? "bg-green-700" : "bg-red-700"
-              } text-white`}
+              className={`mb-6 px-4 py-3 rounded-lg border flex items-start gap-3 ${message.type === "success"
+                  ? "bg-green-50 border-green-200 text-green-700"
+                  : "bg-red-50 border-red-200 text-red-700"
+                }`}
             >
-              {message.text}
+              <span className="font-medium">{message.text}</span>
             </div>
           )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Headline
               </label>
               <input
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
-                className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-slate-600
-                focus:ring-2 focus:ring-accent focus:border-accent text-lg"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 placeholder="Enter headline"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                News
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                News Content
               </label>
               <textarea
                 value={news}
                 onChange={(e) => setNews(e.target.value)}
-                className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-slate-600
-                focus:ring-2 focus:ring-accent focus:border-accent text-lg h-44 sm:h-56 resize-vertical"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500 h-32 sm:h-40 resize-vertical"
                 placeholder="Enter news content"
                 required
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className={`bg-accent text-white px-6 py-3 rounded-lg text-lg ${
-                  loading ? "opacity-60 cursor-not-allowed" : "hover:bg-accent-1"
-                }`}
+                className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2.5 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Saving..." : editingId ? "Update News" : "Create News"}
               </button>
@@ -177,7 +174,7 @@ export default function AdminNews() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-slate-700 text-white px-4 py-3 rounded-lg text-sm hover:bg-slate-600"
+                className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
               >
                 Reset
               </button>
@@ -185,38 +182,40 @@ export default function AdminNews() {
           </form>
 
           {/* News List */}
-          <div className="mt-10">
-            <h3 className="text-white font-semibold mb-4 text-lg">Existing News</h3>
+          <div className="mt-10 pt-8 border-t border-gray-200">
+            <h3 className="text-gray-900 font-semibold mb-4 text-lg">📰 Existing News</h3>
 
             {loadingList ? (
-              <div className="text-slate-400">Loading news...</div>
+              <div className="text-gray-500 text-center py-8">Loading news...</div>
             ) : newsList.length === 0 ? (
-              <div className="text-slate-400">No news found.</div>
+              <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">No news found.</div>
             ) : (
-              <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {newsList.map((item) => (
                   <div
                     key={item._id}
-                    className="bg-bg-top p-4 rounded-xl border border-slate-700 flex items-start justify-between hover:border-slate-500"
+                    className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 flex items-start justify-between"
                   >
                     <div className="flex-1">
-                      <div className="text-lg font-semibold text-white">{item.headline}</div>
-                      <div className="text-sm text-slate-300">{item.news}</div>
+                      <div className="text-base font-semibold text-gray-900">{item.headline}</div>
+                      <div className="text-sm text-gray-600 mt-1 line-clamp-2">{item.news}</div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 ml-3">
                       <button
                         onClick={() => populateForEdit(item)}
-                        className="text-gray-300 hover:text-white"
+                        className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit news"
                       >
-                        <Edit2 />
+                        <Edit2 size={18} />
                       </button>
 
                       <button
                         onClick={() => deleteNews(item._id)}
-                        className="text-red-400 hover:text-red-600"
+                        className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete news"
                       >
-                        <Trash2 />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>

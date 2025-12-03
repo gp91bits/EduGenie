@@ -122,39 +122,29 @@ export default function AdminEvent() {
   return (
     <div
       id="addEvents"
-      className="
-      w-full 
-      h-screen
-      bg-bg 
-      pt-20 pb-5 
-      px-4 sm:px-6 lg:px-12 
-      flex items-start justify-center 
-      overflow-y-auto
-    "
+      className="w-full min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pt-20 pb-10 px-4 sm:px-6 lg:px-12 flex items-start justify-center overflow-y-auto"
     >
       <div className="w-full max-w-3xl">
         {/* Heading Section  */}
-        <div className="mb-6">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">
+        <div className="mb-8">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
             Manage Events
           </h2>
-          <p className="text-sm sm:text-base text-slate-400 mt-2">
-            Create or update public events. These events will appear in users'
-            dashboard timeline.
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
+            Create or update public events. These events will appear in users' dashboard.
           </p>
         </div>
 
         {/* Card Container */}
-        <div className="bg-bg-2 p-6 sm:p-8 md:p-10 rounded-xl border border-slate-700 shadow-xl min-h-8/12  overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 sm:p-8">
           {/* Status Message */}
           {message && (
             <div
               role="status"
-              className={`mb-6 px-4 py-3 rounded-md flex items-center gap-3 ${
-                message.type === "success"
-                  ? "bg-green-700 text-white"
-                  : "bg-red-700 text-white"
-              }`}
+              className={`mb-6 px-4 py-3 rounded-lg flex items-center gap-3 border ${message.type === "success"
+                  ? "bg-green-50 border-green-200 text-green-700"
+                  : "bg-red-50 border-red-200 text-red-700"
+                }`}
             >
               <span className="font-medium">{message.text}</span>
             </div>
@@ -166,7 +156,7 @@ export default function AdminEvent() {
               <div>
                 <label
                   htmlFor="title"
-                  className="block text-sm font-medium text-slate-300 mb-2"
+                  className="block text-sm font-medium text-gray-900 mb-2"
                 >
                   Event Title
                 </label>
@@ -174,8 +164,7 @@ export default function AdminEvent() {
                   id="title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-slate-600 
-                focus:ring-2 focus:ring-accent focus:border-accent text-lg placeholder:text-slate-400 transition"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500 transition"
                   placeholder="Enter event title"
                   required
                 />
@@ -184,7 +173,7 @@ export default function AdminEvent() {
               <div>
                 <label
                   htmlFor="event"
-                  className="block text-sm font-medium text-slate-300 mb-2"
+                  className="block text-sm font-medium text-gray-900 mb-2"
                 >
                   Event Details
                 </label>
@@ -192,10 +181,8 @@ export default function AdminEvent() {
                   id="event"
                   value={formData.event}
                   onChange={handleChange}
-                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-slate-600 
-                focus:ring-2 focus:ring-accent focus:border-accent text-lg placeholder:text-slate-400 transition 
-                h-36 sm:h-48 resize-vertical"
-                  placeholder="Short event description"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500 transition h-32 sm:h-40 resize-vertical"
+                  placeholder="Event description"
                   required
                 />
               </div>
@@ -203,7 +190,7 @@ export default function AdminEvent() {
               <div>
                 <label
                   htmlFor="date"
-                  className="block text-sm font-medium text-slate-300 mb-2"
+                  className="block text-sm font-medium text-gray-900 mb-2"
                 >
                   Event Date
                 </label>
@@ -212,42 +199,35 @@ export default function AdminEvent() {
                   type="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className="w-full bg-bg-top text-white px-4 py-3 rounded-lg border border-slate-600 
-                focus:ring-2 focus:ring-accent focus:border-accent text-lg transition"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 transition"
                   required
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
                 <div className="flex items-center gap-3">
                   <button
                     type="submit"
                     disabled={saving}
-                    className={`inline-flex items-center justify-center bg-accent text-white px-6 py-3 rounded-lg text-lg 
-                  font-medium transition ${
-                    saving
-                      ? "opacity-60 cursor-not-allowed"
-                      : "hover:bg-accent-1"
-                  }`}
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2.5 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving
                       ? "Saving..."
                       : editingId
-                      ? "Update Event"
-                      : "Create Event"}
+                        ? "Update Event"
+                        : "Create Event"}
                   </button>
 
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="inline-flex items-center justify-center bg-slate-700 text-white px-4 py-3 
-                  rounded-lg text-sm hover:bg-slate-600 transition"
+                    className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
                   >
                     Reset
                   </button>
                 </div>
 
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-gray-600">
                   <span className="font-medium">Mode:</span>{" "}
                   <span className="italic">
                     {editingId
@@ -260,45 +240,47 @@ export default function AdminEvent() {
           )}
 
           {/* Event List */}
-          <div className="mt-10">
-            <h3 className="text-white font-semibold mb-4 text-lg">
-              Existing Events
+          <div className="mt-10 pt-8 border-t border-gray-200">
+            <h3 className="text-gray-900 font-semibold mb-4 text-lg">
+              📅 Existing Events
             </h3>
 
             {loadingEvents ? (
-              <div className="text-slate-400">Loading events...</div>
+              <div className="text-gray-500 text-center py-8">Loading events...</div>
             ) : events.length === 0 ? (
-              <div className="text-slate-400">No events found.</div>
+              <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">No events found.</div>
             ) : (
-              <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {events.map((ev) => (
                   <div
                     key={ev._id}
-                    className="bg-bg-top p-4 rounded-xl border border-slate-700 flex items-start justify-between transition hover:border-slate-500"
+                    className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 flex items-start justify-between"
                   >
                     <div className="flex-1">
-                      <div className="text-lg font-semibold text-white">
+                      <div className="text-base font-semibold text-gray-900">
                         {ev.title}
                       </div>
-                      <div className="text-sm text-slate-300">{ev.event}</div>
-                      <div className="text-xs text-slate-500 mt-2">
-                        {new Date(ev.date).toLocaleDateString()}
+                      <div className="text-sm text-gray-600 mt-1">{ev.event}</div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        📅 {new Date(ev.date).toLocaleDateString()}
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 ml-3">
                       <button
                         onClick={() => populateForEdit(ev)}
-                        className="text-gray-300 hover:text-white"
+                        className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit event"
                       >
-                        <Edit2 />
+                        <Edit2 size={18} />
                       </button>
 
                       <button
                         onClick={() => handleDelete(ev._id)}
-                        className="text-red-400 hover:text-red-600"
+                        className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete event"
                       >
-                        <Trash2 />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>

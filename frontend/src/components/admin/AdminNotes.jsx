@@ -1,387 +1,461 @@
-import React, { useEffect, useMemo, useState } from "react";
-import API from "../../api/axios";
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  ArrowLeft,
+  BookOpen,
+  Film,
+  Upload,
+} from "lucide-react";
 import { semesterData } from "../../semesterData";
 
-function AdminNotes() {
-  const semesters = useMemo(() => {
-    if (!semesterData) return [];
-    if (Array.isArray(semesterData))
-      return semesterData.map((s, i) => ({ id: i, name: s.name || `Semester ${i + 1}` }));
-    return Object.keys(semesterData).map((k) => ({ id: k, name: semesterData[k].name || `Semester ${k}` }));
+const AdminNotes = () => {
+  const [allNotes, setAllNotes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [resourceType, setResourceType] = useState("notes"); // notes or videos
+  const [formData, setFormData] = useState({
+    semesterId: "",
+    subjectId: "",
+    title: "",
+    description: "",
+    fileUrl: "",
+    youtubeUrl: "",
+    duration: "",
+  });
+
+  // Fetch all notes from API
+  const fetchAllNotes = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/subjectNotes/getAllNotes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data.data || []);
+      } else {
+        console.error("Failed to fetch notes:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllNotes();
   }, []);
 
-  const [semesterId, setSemesterId] = useState(semesters[0]?.id ?? null);
-  const [subjects, setSubjects] = useState([]);
-  const [subjectId, setSubjectId] = useState(null);
+  // Flatten and get all notes and videos
+  const getAllNotes = () => {
+    const notes = [];
+    allNotes.forEach((semester) => {
+      semester.subjects?.forEach((subject) => {
+        subject.notes?.forEach((note) => {
+          notes.push({
+            ...note,
+            type: "note",
+            semesterId: semester.semesterId,
+            subjectId: subject.subjectId,
+            semesterName: semesterData[semester.semesterId]?.name,
+            subjectName: subject.subjectName,
+          });
+        });
+        subject.videos?.forEach((video) => {
+          notes.push({
+            ...video,
+            type: "video",
+            semesterId: semester.semesterId,
+            subjectId: subject.subjectId,
+            semesterName: semesterData[semester.semesterId]?.name,
+            subjectName: subject.subjectName,
+          });
+        });
+      });
+    });
+    return notes;
+  };
 
-  const [content, setContent] = useState({ notes: [], videos: [], quizzes: [] });
-  const [loading, setLoading] = useState(false);
+  const toggleAddForm = () => {
+    setShowAddForm(!showAddForm);
+    if (!showAddForm) {
+      setFormData({
+        semesterId: "",
+        subjectId: "",
+        title: "",
+        description: "",
+        fileUrl: "",
+        youtubeUrl: "",
+        duration: "",
+      });
+    }
+  };
 
-  const [form, setForm] = useState({ type: "note", title: "", description: "", url: "" });
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
+  const handleSubmitResource = async (e) => {
+    e.preventDefault();
 
-  // NEW: editing state
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [editingVideoId, setEditingVideoId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", description: "", url: "" });
-
-  useEffect(() => {
-    if (!semesterId) return;
-    const sem = semesterData[semesterId] || semesterData[parseInt(semesterId)];
-    if (!sem) {
-      setSubjects([]);
-      setSubjectId(null);
+    if (!formData.semesterId || !formData.subjectId) {
+      alert("Please select semester and subject");
       return;
     }
-    const subs = sem.subjects || sem.subjectList || sem.subjectsMap || [];
-    const normalized = Array.isArray(subs)
-      ? subs.map((s) => ({ id: s.id ?? s.subjectId ?? s.subjectId, name: s.name ?? s.title ?? String(s.id) }))
-      : Object.keys(subs).map((k) => ({ id: k, name: subs[k].name || subs[k].title || k }));
-    setSubjects(normalized);
-    setSubjectId(normalized[0]?.id ?? null);
-  }, [semesterId]);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      if (!semesterId || !subjectId) {
-        setContent({ notes: [], videos: [], quizzes: [] });
-        return;
-      }
-      setLoading(true);
-      try {
-        const res = await API.get("/subjectNotes/getContent", { params: { subjectId: subjectId, semesterId: semesterId } });
-        const data = res?.data || {};
-        setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
-      } catch (err) {
-        console.error("fetchSubjectContent error:", err);
-        setContent({ notes: [], videos: [], quizzes: [] });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchContent();
-  }, [semesterId, subjectId]);
-
-  const handleFormChange = (e) => {
-    const { id, value } = e.target;
-    setForm((p) => ({ ...p, [id]: value }));
-  };
-
-  const resetForm = () => setForm({ type: "note", title: "", description: "", url: "" });
-
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!semesterId || !subjectId) return setMessage({ type: "error", text: "Select semester and subject first." });
-    if (!form.title.trim() || !form.url.trim()) return setMessage({ type: "error", text: "Title and URL are required." });
-
-    setSaving(true);
     try {
-      if (form.type === "note") {
-        await API.post("/subjectNotes/addNote", {
-          subjectId: Number(subjectId) || subjectId,
-          semesterId: Number(semesterId) || semesterId,
-          title: form.title.trim(),
-          description: form.description.trim(),
-          fileType: "drive",
-          fileUrl: form.url.trim(),
-        });
+      const token = localStorage.getItem("accessToken");
+      const endpoint = resourceType === "notes" ? "addNote" : "addVideo";
+
+      const payload = {
+        semesterId: parseInt(formData.semesterId),
+        subjectId: formData.subjectId,
+        title: formData.title,
+        description: formData.description,
+        ...(resourceType === "notes" && { fileUrl: formData.fileUrl }),
+        ...(resourceType === "videos" && {
+          youtubeUrl: formData.youtubeUrl,
+          duration: formData.duration,
+        }),
+      };
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/subjectNotes/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (response.ok) {
+        alert(`${resourceType === "notes" ? "Note" : "Video"} added successfully`);
+        fetchAllNotes();
+        toggleAddForm();
       } else {
-        await API.post("/subjectNotes/addVideo", {
-          subjectId: Number(subjectId) || subjectId,
-          semesterId: Number(semesterId) || semesterId,
-          title: form.title.trim(),
-          description: form.description.trim(),
-          youtubeUrl: form.url.trim(),
-        });
+        alert("Failed to add resource");
       }
-      setMessage({ type: "success", text: `${form.type === "note" ? "Note" : "Video"} added.` });
-      resetForm();
-      // refresh
-      const res = await API.get("/subjectNotes/getContent", { params: { subjectId, semesterId } });
-      const data = res?.data || {};
-      setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
-
-      // notify others to refresh (semesterId/subjectId included)
-      window.dispatchEvent(
-        new CustomEvent("subjectNotes:updated", { detail: { semesterId, subjectId } })
-      );
-    } catch (err) {
-      console.error("add content error:", err);
-      const txt = err?.response?.data?.message || "Failed to add";
-      setMessage({ type: "error", text: txt });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      console.error("Error adding resource:", error);
+      alert("Error adding resource");
     }
   };
 
-  // EDIT / UPDATE handlers
-  const startEditNote = (note) => {
-    setEditingNoteId(note._id);
-    setEditForm({ title: note.title || "", description: note.description || "", url: note.fileUrl || "" });
-  };
-  const cancelEditNote = () => {
-    setEditingNoteId(null);
-    setEditForm({ title: "", description: "", url: "" });
-  };
-  const handleUpdateNote = async (e) => {
-    e.preventDefault();
-    if (!editingNoteId) return;
-    setSaving(true);
-    try {
-      await API.put("/subjectNotes/updateNote", {
-        subjectId: Number(subjectId) || subjectId,
-        semesterId: Number(semesterId) || semesterId,
-        noteId: editingNoteId,
-        title: editForm.title.trim(),
-        description: editForm.description.trim(),
-        fileUrl: editForm.url.trim(),
-      });
-      setMessage({ type: "success", text: "Note updated." });
-      cancelEditNote();
-      const res = await API.get("/subjectNotes/getContent", { params: { subjectId, semesterId } });
-      const data = res?.data || {};
-      setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
+  // ========== MAIN RENDER ==========
 
-      // notify others to refresh (semesterId/subjectId included)
-      window.dispatchEvent(
-        new CustomEvent("subjectNotes:updated", { detail: { semesterId, subjectId } })
-      );
-    } catch (err) {
-      console.error("updateNote error:", err);
-      setMessage({ type: "error", text: err?.response?.data?.message || "Failed to update note" });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
-    }
-  };
+  if (loading) {
+    return <div className="text-center py-12 text-gray-600">Loading...</div>;
+  }
 
-  const startEditVideo = (video) => {
-    setEditingVideoId(video._id);
-    setEditForm({ title: video.title || "", description: video.description || "", url: video.youtubeUrl || "" });
-  };
-  const cancelEditVideo = () => {
-    setEditingVideoId(null);
-    setEditForm({ title: "", description: "", url: "" });
-  };
-  const handleUpdateVideo = async (e) => {
-    e.preventDefault();
-    if (!editingVideoId) return;
-    setSaving(true);
-    try {
-      await API.put("/subjectNotes/updateVideo", {
-        subjectId: Number(subjectId) || subjectId,
-        semesterId: Number(semesterId) || semesterId,
-        videoId: editingVideoId,
-        title: editForm.title.trim(),
-        description: editForm.description.trim(),
-        youtubeUrl: editForm.url.trim(),
-      });
-      setMessage({ type: "success", text: "Video updated." });
-      cancelEditVideo();
-      const res = await API.get("/subjectNotes/getContent", { params: { subjectId, semesterId } });
-      const data = res?.data || {};
-      setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
-
-      // notify others to refresh (semesterId/subjectId included)
-      window.dispatchEvent(
-        new CustomEvent("subjectNotes:updated", { detail: { semesterId, subjectId } })
-      );
-    } catch (err) {
-      console.error("updateVideo error:", err);
-      setMessage({ type: "error", text: err?.response?.data?.message || "Failed to update video" });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
-    }
-  };
-
-  // DELETE handlers (use config.data for body with delete)
-  const handleDeleteNote = async (noteId) => {
-    if (!window.confirm("Delete this note?")) return;
-    setSaving(true);
-    try {
-      await API.delete("/subjectNotes/deleteNote", { data: { subjectId, semesterId, noteId } });
-      setMessage({ type: "success", text: "Note deleted." });
-      const res = await API.get("/subjectNotes/getContent", { params: { subjectId, semesterId } });
-      const data = res?.data || {};
-      setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
-
-      // notify others to refresh (semesterId/subjectId included)
-      window.dispatchEvent(
-        new CustomEvent("subjectNotes:updated", { detail: { semesterId, subjectId } })
-      );
-    } catch (err) {
-      console.error("deleteNote error:", err);
-      setMessage({ type: "error", text: err?.response?.data?.message || "Failed to delete note" });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
-    }
-  };
-
-  const handleDeleteVideo = async (videoId) => {
-    if (!window.confirm("Delete this video?")) return;
-    setSaving(true);
-    try {
-      await API.delete("/subjectNotes/deleteVideo", { data: { subjectId, semesterId, videoId } });
-      setMessage({ type: "success", text: "Video deleted." });
-      const res = await API.get("/subjectNotes/getContent", { params: { subjectId, semesterId } });
-      const data = res?.data || {};
-      setContent({ notes: data.notes || [], videos: data.videos || [], quizzes: data.quizzes || [] });
-
-      // notify others to refresh (semesterId/subjectId included)
-      window.dispatchEvent(
-        new CustomEvent("subjectNotes:updated", { detail: { semesterId, subjectId } })
-      );
-    } catch (err) {
-      console.error("deleteVideo error:", err);
-      setMessage({ type: "error", text: err?.response?.data?.message || "Failed to delete video" });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
-    }
-  };
-
-  const renderNotesList = () => {
-    if (loading) return <div className="text-slate-400">Loading...</div>;
-    return (
-      <div className="space-y-3">
-        <div>
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Drive Notes</h4>
-          {content.notes.length === 0 ? (
-            <div className="text-slate-500 text-sm">No drive notes yet.</div>
-          ) : (
-            content.notes.map((n) =>
-              editingNoteId === n._id ? (
-                <form key={n._id} onSubmit={handleUpdateNote} className="bg-bg-2 p-3 rounded-md space-y-2">
-                  <input value={editForm.title} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
-                  <input value={editForm.url} onChange={(e) => setEditForm((p) => ({ ...p, url: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
-                  <textarea value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600 h-24" />
-                  <div className="flex gap-2">
-                    <button type="submit" disabled={saving} className="bg-accent text-white px-4 py-2 rounded">{saving ? "Saving..." : "Update"}</button>
-                    <button type="button" onClick={cancelEditNote} className="bg-slate-700 text-white px-4 py-2 rounded">Cancel</button>
-                  </div>
-                </form>
-              ) : (
-                <div key={n._id} className="bg-bg-2 p-3 rounded-md flex items-start justify-between">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-white truncate">{n.title}</div>
-                    <div className="text-xs text-slate-400 truncate">{n.description}</div>
-                    <a className="text-xs text-blue-300 mt-1 inline-block break-all" href={n.fileUrl} target="_blank" rel="noreferrer">{n.fileUrl}</a>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditNote(n)} className="text-sm bg-slate-700 px-3 py-1 rounded hover:bg-slate-600">Edit</button>
-                    <button onClick={() => handleDeleteNote(n._id)} disabled={saving} className="text-sm bg-red-600 px-3 py-1 rounded hover:bg-red-700">{saving ? "..." : "Delete"}</button>
-                  </div>
-                </div>
-              )
-            )
-          )}
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Videos</h4>
-          {content.videos.length === 0 ? (
-            <div className="text-slate-500 text-sm">No videos yet.</div>
-          ) : (
-            content.videos.map((v) =>
-              editingVideoId === v._id ? (
-                <form key={v._id} onSubmit={handleUpdateVideo} className="bg-bg-2 p-3 rounded-md space-y-2">
-                  <input value={editForm.title} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
-                  <input value={editForm.url} onChange={(e) => setEditForm((p) => ({ ...p, url: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
-                  <textarea value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600 h-24" />
-                  <div className="flex gap-2">
-                    <button type="submit" disabled={saving} className="bg-accent text-white px-4 py-2 rounded">{saving ? "Saving..." : "Update"}</button>
-                    <button type="button" onClick={cancelEditVideo} className="bg-slate-700 text-white px-4 py-2 rounded">Cancel</button>
-                  </div>
-                </form>
-              ) : (
-                <div key={v._id} className="bg-bg-2 p-3 rounded-md flex items-start justify-between">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-white truncate">{v.title}</div>
-                    <div className="text-xs text-slate-400 truncate">{v.description}</div>
-                    <a className="text-xs text-blue-300 mt-1 inline-block break-all" href={v.youtubeUrl} target="_blank" rel="noreferrer">{v.youtubeUrl}</a>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditVideo(v)} className="text-sm bg-slate-700 px-3 py-1 rounded hover:bg-slate-600">Edit</button>
-                    <button onClick={() => handleDeleteVideo(v._id)} disabled={saving} className="text-sm bg-red-600 px-3 py-1 rounded hover:bg-red-700">{saving ? "..." : "Delete"}</button>
-                  </div>
-                </div>
-              )
-            )
-          )}
-        </div>
-      </div>
-    );
-  };
+  const allResources = getAllNotes();
+  const notes = allResources.filter((r) => r.type === "note");
+  const videos = allResources.filter((r) => r.type === "video");
 
   return (
-    <div id="addNotes" className="w-full min-h-screen pt-20 bg-bg py-10 px-4 sm:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Admin - Subject Notes</h2>
-          <p className="text-sm text-slate-400 mt-1">Select semester & subject to view / add Drive notes and YouTube videos.</p>
+    <div id="addNotes" className="w-full min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-24 pb-10 px-6 lg:px-12">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Notes & Videos</h1>
+            <p className="text-gray-600">Manage all course materials for students</p>
+          </div>
+          <button
+            onClick={toggleAddForm}
+            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Resource
+          </button>
         </div>
 
-        <div className="bg-bg-2 p-6 rounded-xl border border-slate-700">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Semester</label>
-              <select value={semesterId ?? ""} onChange={(e) => setSemesterId(e.target.value)} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600">
-                {semesters.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+        {/* Add Form */}
+        {showAddForm && (
+          <div className="bg-white rounded-lg p-8 border border-gray-200 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Add New Resource</h2>
+
+            <div className="mb-8">
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Resource Type
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setResourceType("notes")}
+                  className={`p-6 rounded-lg border-2 transition flex flex-col items-center gap-3 ${resourceType === "notes"
+                    ? "border-indigo-600 bg-indigo-50"
+                    : "border-gray-300 bg-white hover:border-gray-400"
+                    }`}
+                >
+                  <BookOpen size={32} className="text-indigo-600" />
+                  <span className="font-semibold text-gray-800">Note / PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResourceType("videos")}
+                  className={`p-6 rounded-lg border-2 transition flex flex-col items-center gap-3 ${resourceType === "videos"
+                    ? "border-indigo-600 bg-indigo-50"
+                    : "border-gray-300 bg-white hover:border-gray-400"
+                    }`}
+                >
+                  <Film size={32} className="text-indigo-600" />
+                  <span className="font-semibold text-gray-800">Video URL</span>
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Subject</label>
-              <select value={subjectId ?? ""} onChange={(e) => setSubjectId(e.target.value)} className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600">
-                {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <div className="text-sm text-slate-400">Last updated: <span className="text-white font-medium ml-2">{content.notes.length + content.videos.length} items</span></div>
-            </div>
-          </div>
-
-          <div className="mb-6">{renderNotesList()}</div>
-
-          <div className="pt-4 border-t border-slate-700">
-            <h3 className="text-lg font-semibold text-white mb-3">Add new item</h3>
-
-            {message && <div className={`mb-4 px-4 py-2 rounded ${message.type === "success" ? "bg-green-700 text-white" : "bg-red-700 text-white"}`}>{message.text}</div>}
-
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div className="flex gap-3">
-                <label className="inline-flex items-center gap-2 text-sm text-slate-300">
-                  <input type="radio" checked={form.type === "note"} onChange={() => setForm((p) => ({ ...p, type: "note" }))} />
-                  Drive Note
+            <form onSubmit={handleSubmitResource} className="space-y-6">
+              {/* Semester */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Semester
                 </label>
-                <label className="inline-flex items-center gap-2 text-sm text-slate-300">
-                  <input type="radio" checked={form.type === "video"} onChange={() => setForm((p) => ({ ...p, type: "video" }))} />
-                  YouTube Video
-                </label>
+                <select
+                  value={formData.semesterId}
+                  onChange={(e) => setFormData({ ...formData, semesterId: e.target.value, subjectId: "" })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  required
+                >
+                  <option value="">Select Semester</option>
+                  {Object.entries(semesterData).map(([id, sem]) => (
+                    <option key={id} value={id}>{sem.name}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input id="title" value={form.title} onChange={handleFormChange} placeholder="Title" className="col-span-2 bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
-                <input id="url" value={form.url} onChange={handleFormChange} placeholder={form.type === "note" ? "Google Drive file URL" : "YouTube URL"} className="col-span-1 bg-bg-top text-white px-3 py-2 rounded border border-slate-600" />
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject
+                </label>
+                <select
+                  value={formData.subjectId}
+                  onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  required
+                >
+                  <option value="">Select Subject</option>
+                  {formData.semesterId &&
+                    semesterData[parseInt(formData.semesterId)]?.subjects?.map((sub) => (
+                      <option key={sub.id} value={sub.id}>{sub.name}</option>
+                    ))}
+                </select>
               </div>
 
-              <textarea id="description" value={form.description} onChange={handleFormChange} placeholder="Short description (optional)" className="w-full bg-bg-top text-white px-3 py-2 rounded border border-slate-600 h-24" />
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Lecture 1 - Introduction"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  required
+                />
+              </div>
 
-              <div className="flex items-center gap-3">
-                <button type="submit" disabled={saving} className={`bg-accent text-white px-5 py-2 rounded ${saving ? "opacity-60 cursor-not-allowed" : "hover:bg-accent-1"}`}>{saving ? "Saving..." : `Add ${form.type === "note" ? "Drive Note" : "Video"}`}</button>
-                <button type="button" onClick={resetForm} className="bg-slate-700 text-white px-4 py-2 rounded hover:bg-slate-600">Reset</button>
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Description..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows="3"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                />
+              </div>
+
+              {/* Notes-specific fields */}
+              {resourceType === "notes" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    File URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/document.pdf"
+                    value={formData.fileUrl}
+                    onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Videos-specific fields */}
+              {resourceType === "videos" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      YouTube URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={formData.youtubeUrl}
+                      onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Duration
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 45:30"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={toggleAddForm}
+                  className="flex-1 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                >
+                  <Upload size={18} />
+                  Add Resource
+                </button>
               </div>
             </form>
           </div>
-        </div>
+        )}
+
+        {/* Notes Section */}
+        {notes.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-6 h-6 text-blue-600" />
+              <h2 className="text-2xl font-bold text-gray-900">Notes</h2>
+              <span className="text-lg text-gray-500">({notes.length})</span>
+            </div>
+            <div className="space-y-3">
+              {notes.map((note) => (
+                <div key={note._id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-800">{note.title}</h3>
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                          {note.semesterName} • {note.subjectName}
+                        </span>
+                      </div>
+                      {note.description && (
+                        <p className="text-sm text-gray-600 mb-2">{note.description}</p>
+                      )}
+                      <a
+                        href={note.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 hover:underline"
+                      >
+                        View Document →
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition">
+                        <Edit2 size={18} />
+                      </button>
+                      <button className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Videos Section */}
+        {videos.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Film className="w-6 h-6 text-red-600" />
+              <h2 className="text-2xl font-bold text-gray-900">Videos</h2>
+              <span className="text-lg text-gray-500">({videos.length})</span>
+            </div>
+            <div className="space-y-3">
+              {videos.map((video) => (
+                <div key={video._id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-800">{video.title}</h3>
+                        <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">
+                          {video.semesterName} • {video.subjectName}
+                        </span>
+                      </div>
+                      {video.description && (
+                        <p className="text-sm text-gray-600 mb-1">{video.description}</p>
+                      )}
+                      {video.duration && (
+                        <p className="text-xs text-gray-500 mb-2">Duration: {video.duration}</p>
+                      )}
+                      <a
+                        href={video.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 hover:underline"
+                      >
+                        Watch Video →
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition">
+                        <Edit2 size={18} />
+                      </button>
+                      <button className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {notes.length === 0 && videos.length === 0 && (
+          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-600 font-medium mb-2">No resources yet</p>
+            <p className="text-gray-500 text-sm">Click "Add Resource" to get started</p>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
 
 export default AdminNotes;

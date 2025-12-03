@@ -504,3 +504,157 @@ export const deleteQuiz = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// ============================================
+// ADMIN ONLY - GET ALL NOTES ACROSS SEMESTERS
+// ============================================
+
+export const getAllNotes = async (req, res) => {
+  try {
+    console.log("[getAllNotes] Received request from user:", req.user?.email);
+    const allContent = await SubjectNotes.find({});
+    console.log("[getAllNotes] Found " + allContent.length + " records");
+
+    // Organize by semester, then by subject
+    const semesters = {};
+
+    allContent.forEach((content) => {
+      if (!semesters[content.semesterId]) {
+        semesters[content.semesterId] = {
+          semesterId: content.semesterId,
+          subjects: [],
+        };
+      }
+
+      semesters[content.semesterId].subjects.push({
+        subjectId: content.subjectId,
+        subjectName: `Subject ${content.subjectId}`,
+        notes: content.notes || [],
+        videos: content.videos || [],
+      });
+    });
+
+    // Convert to array
+    const result = Object.values(semesters).sort(
+      (a, b) => a.semesterId - b.semesterId
+    );
+
+    console.log("[getAllNotes] Returning " + result.length + " semesters");
+    return res.status(200).json({ data: result });
+  } catch (error) {
+    console.error("[getAllNotes] error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ============================================
+// ADMIN ONLY - TOGGLE NOTE VISIBILITY
+// ============================================
+
+export const toggleNoteVisibility = async (req, res) => {
+  try {
+    const { subjectId, semesterId, noteId } = req.body;
+
+    if (!subjectId || !semesterId || !noteId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Note ID required",
+      });
+    }
+
+    // First, find the note to get current state
+    const content = await SubjectNotes.findOne({
+      subjectId: parseInt(subjectId),
+      semesterId: parseInt(semesterId),
+      "notes._id": noteId,
+    });
+
+    if (!content) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const note = content.notes.find((n) => n._id.toString() === noteId.toString());
+    const newHiddenState = !note.isHidden;
+
+    // Update the note
+    const updatedContent = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+        "notes._id": noteId,
+      },
+      {
+        $set: {
+          "notes.$[elem].isHidden": newHiddenState,
+        },
+      },
+      {
+        arrayFilters: [{ "elem._id": noteId }],
+        new: true,
+      }
+    );
+
+    return res.status(200).json({
+      message: "Note visibility toggled successfully",
+      isHidden: newHiddenState,
+    });
+  } catch (error) {
+    console.error("toggleNoteVisibility error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ============================================
+// ADMIN ONLY - TOGGLE VIDEO VISIBILITY
+// ============================================
+
+export const toggleVideoVisibility = async (req, res) => {
+  try {
+    const { subjectId, semesterId, videoId } = req.body;
+
+    if (!subjectId || !semesterId || !videoId) {
+      return res.status(400).json({
+        message: "Subject ID, Semester ID, and Video ID required",
+      });
+    }
+
+    // First, find the video to get current state
+    const content = await SubjectNotes.findOne({
+      subjectId: parseInt(subjectId),
+      semesterId: parseInt(semesterId),
+      "videos._id": videoId,
+    });
+
+    if (!content) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    const video = content.videos.find((v) => v._id.toString() === videoId.toString());
+    const newHiddenState = !video.isHidden;
+
+    // Update the video
+    const updatedContent = await SubjectNotes.findOneAndUpdate(
+      {
+        subjectId: parseInt(subjectId),
+        semesterId: parseInt(semesterId),
+        "videos._id": videoId,
+      },
+      {
+        $set: {
+          "videos.$[elem].isHidden": newHiddenState,
+        },
+      },
+      {
+        arrayFilters: [{ "elem._id": videoId }],
+        new: true,
+      }
+    );
+
+    return res.status(200).json({
+      message: "Video visibility toggled successfully",
+      isHidden: newHiddenState,
+    });
+  } catch (error) {
+    console.error("toggleVideoVisibility error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

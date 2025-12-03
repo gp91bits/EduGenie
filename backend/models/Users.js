@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
       data: { type: Buffer, default: null },
       contentType: { type: String, default: null },
     },
+    blocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

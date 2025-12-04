@@ -36,20 +36,29 @@ const app = express();
 app.use(cookieParser());
 app.use(express.json());
 
+const allowedOrigins = [
+  "http://localhost:5173",  //Local Vite URL
+  "https://edu-genie-six.vercel.app"  //Vercel URL
+];
+  
 // CORS configuration - accept any localhost port
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow all localhost origins (http://localhost:any-port)
-      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.log("❌ Blocked CORS for origin:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
   })
 );
+
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

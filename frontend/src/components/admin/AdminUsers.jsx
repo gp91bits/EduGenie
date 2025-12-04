@@ -247,31 +247,34 @@ function AdminUsers() {
                 </div>
 
                 {/* Users Table */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 mb-8">
                     {filteredUsers.length > 0 ? (
-                        <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                            <table className="w-full">
-                                <thead className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                        <div className="overflow-auto rounded-2xl admin-scroll max-h-[600px]">
+                            <table className="w-full min-w-[1000px]">
+                                <thead className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-10">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
+                                        <th className="px-5 py-4 text-left text-sm font-semibold whitespace-nowrap">
                                             Name
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
+                                        <th className="px-5 py-4 text-left text-sm font-semibold whitespace-nowrap">
                                             Email
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
-                                            Semester
+                                        <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">
+                                            Sem
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
-                                            Current Streak
+                                        <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">
+                                            Streak
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
+                                        <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">
+                                            Best
+                                        </th>
+                                        <th className="px-5 py-4 text-left text-sm font-semibold whitespace-nowrap">
                                             Last Login
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
+                                        <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">
                                             Status
                                         </th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">
+                                        <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">
                                             Actions
                                         </th>
                                     </tr>
@@ -280,82 +283,70 @@ function AdminUsers() {
                                     {filteredUsers.map((user, idx) => (
                                         <tr
                                             key={user._id}
-                                            className={`border-b border-gray-200 hover:bg-purple-50 transition-colors duration-200 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                                                }`}
+                                            className={`border-b border-gray-100 hover:bg-purple-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}
                                         >
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <p className="font-medium text-gray-900">
-                                                        {user.name}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-5 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <Mail size={16} className="text-gray-400" />
-                                                    <span className="text-gray-600 text-sm">
-                                                        {user.email}
-                                                    </span>
+                                                    {user.profilePicture ? (
+                                                        <img
+                                                            src={user.profilePicture.startsWith('http') ? user.profilePicture : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '')}${user.profilePicture}`}
+                                                            alt={user.name}
+                                                            className="w-8 h-8 rounded-full object-cover border-2 border-purple-200"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                                                            {user.name?.charAt(0)?.toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <span className="font-medium text-gray-900 text-sm">{user.name}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
-                                                    {user.semester}
+                                            <td className="px-5 py-2">
+                                                <span className="text-gray-600 text-sm">{user.email}</span>
+                                            </td>
+                                            <td className="px-4 py-2 text-center">
+                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs">
+                                                    {user.semester || '-'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Flame size={16} className="text-orange-500" />
-                                                    <span className="text-gray-700 font-medium">
-                                                        {user.streak || 0}
-                                                    </span>
+                                            <td className="px-4 py-2 text-center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Flame size={12} className="text-orange-500" />
+                                                    <span className="text-gray-700 font-medium text-sm">{user.streak || 0}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2 text-gray-600 text-sm">
-                                                    <Calendar size={16} />
+                                            <td className="px-4 py-2 text-center">
+                                                <span className="text-purple-600 font-bold text-sm">🏆 {user.bestStreak || 0}</span>
+                                            </td>
+                                            <td className="px-5 py-2">
+                                                <div className="flex items-center gap-1 text-gray-500 text-xs">
+                                                    <Calendar size={12} />
                                                     {formatDate(user.lastLoginDate)}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${user.blocked
-                                                            ? "bg-red-100 text-red-700"
-                                                            : "bg-green-100 text-green-700"
-                                                        }`}
-                                                >
-                                                    <span
-                                                        className={`w-2 h-2 rounded-full ${user.blocked ? "bg-red-500" : "bg-green-500"
-                                                            }`}
-                                                    ></span>
+                                            <td className="px-4 py-2 text-center">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.blocked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.blocked ? "bg-red-500" : "bg-green-500"}`}></span>
                                                     {user.blocked ? "Blocked" : "Active"}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    {/* Block/Unblock Button */}
+                                            <td className="px-4 py-2">
+                                                <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => setConfirmBlock(user._id)}
                                                         disabled={operationLoading === `block-${user._id}`}
-                                                        className={`p-2.5 rounded-lg transition-all duration-200 ${user.blocked
-                                                                ? "bg-green-100 text-green-600 hover:bg-green-200 hover:scale-110"
-                                                                : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200 hover:scale-110"
-                                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                        title={
-                                                            user.blocked ? "Unblock user" : "Block user"
-                                                        }
+                                                        className={`p-1.5 rounded-lg transition-all ${user.blocked ? "bg-green-100 text-green-600 hover:bg-green-200" : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"} disabled:opacity-50`}
+                                                        title={user.blocked ? "Unblock" : "Block"}
                                                     >
-                                                        <Ban size={18} />
+                                                        <Ban size={14} />
                                                     </button>
-
-                                                    {/* Delete Button */}
                                                     <button
                                                         onClick={() => setConfirmDelete(user._id)}
                                                         disabled={operationLoading === `delete-${user._id}`}
-                                                        className="p-2.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 hover:scale-110 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title="Delete user"
+                                                        className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-all disabled:opacity-50"
+                                                        title="Delete"
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 </div>
                                             </td>

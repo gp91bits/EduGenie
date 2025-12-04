@@ -9,6 +9,7 @@ import {
     Clock,
     FileText,
     ArrowRight,
+    ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
@@ -46,12 +47,10 @@ function AdminDashboard() {
                     }),
                 ]);
 
-                // Calculate stats
                 const totalNews = newsRes?.data?.news?.length || 0;
                 const totalEvents = eventsRes?.data?.events?.length || 0;
                 const totalUsers = usersRes?.data?.users?.length || 0;
 
-                // Get recent activity (combine news and events by date)
                 const recentActivity = [
                     ...(newsRes?.data?.news?.slice(0, 3).map((item) => ({
                         type: "news",
@@ -71,7 +70,7 @@ function AdminDashboard() {
                     totalUsers,
                     totalEvents,
                     totalNews,
-                    totalNotes: 0, // Will be updated when notes stats endpoint is available
+                    totalNotes: 0,
                     recentActivity: recentActivity.slice(0, 5),
                     userGrowth: [],
                 });
@@ -87,51 +86,19 @@ function AdminDashboard() {
         fetchDashboardData();
     }, []);
 
-    const StatCard = ({ icon: Icon, title, value, trend, color }) => (
-        <div className={`bg-gradient-to-br ${color} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
-            <div className="flex justify-between items-start">
-                <div>
-                    <p className="text-white/80 text-sm font-medium mb-2">{title}</p>
-                    <h3 className="text-4xl font-bold text-white mb-2">{value}</h3>
-                    {trend && (
-                        <div className="flex items-center gap-1 text-green-300 text-sm">
-                            <TrendingUp size={16} />
-                            <span>{trend}% this month</span>
-                        </div>
-                    )}
-                </div>
-                <div className="bg-white/20 p-3 rounded-xl">
-                    <Icon size={28} className="text-white" />
-                </div>
-            </div>
-        </div>
-    );
-
-    const ActivityItem = ({ item }) => (
-        <div className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0">
-            <div className="bg-purple-100 p-3 rounded-xl mt-1">
-                <item.icon size={18} className="text-purple-600" />
-            </div>
-            <div className="flex-1">
-                <p className="text-gray-800 font-medium text-sm">{item.title}</p>
-                <p className="text-gray-500 text-xs">
-                    {item.date.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    })}
-                </p>
-            </div>
-        </div>
-    );
+    const scrollTo = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: "instant", block: "start" });
+        }
+    };
 
     if (loading) {
         return (
-            <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+            <div className="w-full h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="animate-spin mb-4">
-                        <BarChart3 size={48} className="text-purple-600" />
+                        <BarChart3 size={48} className="text-gray-700" />
                     </div>
                     <p className="text-gray-600">Loading dashboard...</p>
                 </div>
@@ -140,14 +107,9 @@ function AdminDashboard() {
     }
 
     return (
-        <div id="adminDashboard" className="w-full min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-8">
+        <div id="adminDashboard" className="w-full min-h-screen bg-gray-50 pt-20 pb-10 px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-                    <p className="text-gray-600">Welcome back! Here's your platform overview.</p>
-                </div>
-
+                
                 {/* Error Message */}
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -155,125 +117,207 @@ function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <StatCard
-                        icon={Users}
-                        title="Total Users"
-                        value={stats.totalUsers}
-                        color="from-blue-500 to-blue-600"
-                        trend={12}
-                    />
-                    <StatCard
-                        icon={Newspaper}
-                        title="Total News"
-                        value={stats.totalNews}
-                        color="from-purple-500 to-purple-600"
-                        trend={8}
-                    />
-                    <StatCard
-                        icon={Calendar}
-                        title="Total Events"
-                        value={stats.totalEvents}
-                        color="from-green-500 to-green-600"
-                        trend={5}
-                    />
-                    <StatCard
-                        icon={BookOpen}
-                        title="Study Notes"
-                        value={stats.totalNotes}
-                        color="from-orange-500 to-orange-600"
-                        trend={15}
-                    />
+                {/* Stats Grid - Clean White Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {/* Users Card */}
+                    <button 
+                        onClick={() => scrollTo("adminUsers")}
+                        className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all text-left cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                                <Users size={20} className="text-violet-600" />
+                            </div>
+                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">+12%</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                        <p className="text-sm text-gray-500">Total Users</p>
+                    </button>
+
+                    {/* News Card */}
+                    <button 
+                        onClick={() => scrollTo("addNews")}
+                        className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all text-left cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <Newspaper size={20} className="text-blue-600" />
+                            </div>
+                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">+8%</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalNews}</p>
+                        <p className="text-sm text-gray-500">News Articles</p>
+                    </button>
+
+                    {/* Events Card */}
+                    <button 
+                        onClick={() => scrollTo("addEvents")}
+                        className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-200 transition-all text-left cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                                <Calendar size={20} className="text-teal-600" />
+                            </div>
+                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">+5%</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalEvents}</p>
+                        <p className="text-sm text-gray-500">Events</p>
+                    </button>
+
+                    {/* Notes Card */}
+                    <button 
+                        onClick={() => scrollTo("addNotes")}
+                        className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all text-left cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <BookOpen size={20} className="text-orange-600" />
+                            </div>
+                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">+15%</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalNotes}</p>
+                        <p className="text-sm text-gray-500">Study Notes</p>
+                    </button>
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
                     {/* Recent Activity */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Clock size={24} className="text-purple-600" />
-                            <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
+                    <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <div className="p-5 border-b border-gray-100">
+                            <div className="flex items-center gap-2">
+                                <Clock size={18} className="text-gray-500" />
+                                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                            </div>
                         </div>
-
-                        {stats.recentActivity.length > 0 ? (
-                            <div>
-                                {stats.recentActivity.map((item, idx) => (
-                                    <ActivityItem key={idx} item={item} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <FileText size={48} className="text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500">No recent activity</p>
-                            </div>
-                        )}
+                        <div className="p-5">
+                            {stats.recentActivity.length > 0 ? (
+                                <div className="space-y-4">
+                                    {stats.recentActivity.map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                                item.type === 'news' ? 'bg-blue-100' : 'bg-teal-100'
+                                            }`}>
+                                                <item.icon size={16} className={item.type === 'news' ? 'text-blue-600' : 'text-teal-600'} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {item.date.toLocaleDateString("en-US", {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </p>
+                                            </div>
+                                            <ChevronRight size={16} className="text-gray-400" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10">
+                                    <FileText size={40} className="text-gray-300 mx-auto mb-3" />
+                                    <p className="text-gray-500 text-sm">No recent activity</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Quick Stats */}
+                    {/* Right Sidebar */}
                     <div className="space-y-6">
-                        {/* Platform Status */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <h3 className="text-xl font-bold text-gray-900 mb-4">Platform Status</h3>
-                            <div className="space-y-3">
+                        
+                        {/* System Status */}
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="p-5 border-b border-gray-100">
+                                <h3 className="text-lg font-semibold text-gray-900">System Status</h3>
+                            </div>
+                            <div className="p-5 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-600 text-sm">Server Status</span>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span className="text-green-600 font-medium text-sm">Online</span>
+                                    <span className="text-sm text-gray-600">Server</span>
+                                    <span className="inline-flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        Online
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-600 text-sm">Database</span>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span className="text-green-600 font-medium text-sm">Connected</span>
+                                    <span className="text-sm text-gray-600">Database</span>
+                                    <span className="inline-flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        Connected
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-600 text-sm">API Status</span>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span className="text-green-600 font-medium text-sm">Healthy</span>
+                                    <span className="text-sm text-gray-600">API</span>
+                                    <span className="inline-flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        Healthy
                                     </span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Quick Actions */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-                            <div className="space-y-2">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="p-5 border-b border-gray-100">
+                                <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                            </div>
+                            <div className="p-4 space-y-2">
                                 <button
-                                    onClick={() => {
-                                        // Scroll to the adminUsers section
-                                        const element = document.getElementById("adminUsers");
-                                        if (element) {
-                                            element.scrollIntoView({ behavior: "smooth", block: "start" });
-                                        }
-                                    }}
-                                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium text-sm flex items-center justify-between px-4"
+                                    onClick={() => scrollTo("adminUsers")}
+                                    className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
                                 >
-                                    <span>👥 Manage Users</span>
-                                    <ArrowRight size={16} />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                                            <Users size={16} className="text-violet-600" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">Manage Users</span>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                                 </button>
-                                <button className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-2.5 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 font-medium text-sm">
-                                    + Create News
+                                
+                                <button
+                                    onClick={() => scrollTo("addNews")}
+                                    className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <Newspaper size={16} className="text-blue-600" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">Create News</span>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                                 </button>
-                                <button className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 font-medium text-sm">
-                                    + Create Event
+                                
+                                <button
+                                    onClick={() => scrollTo("addEvents")}
+                                    className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                                            <Calendar size={16} className="text-teal-600" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">Create Event</span>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                                 </button>
-                                <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2.5 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 font-medium text-sm">
-                                    + Add Notes
+                                
+                                <button
+                                    onClick={() => scrollTo("addNotes")}
+                                    className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                            <BookOpen size={16} className="text-orange-600" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">Add Notes</span>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Footer Info */}
-                <div className="mt-8 text-center text-gray-500 text-sm">
-                    <p>Last updated: {new Date().toLocaleString()}</p>
                 </div>
             </div>
         </div>

@@ -8,7 +8,7 @@ function Quiz() {
   return (
     <div className="flex h-screen bg-bg">
       <Navbar />
-      <div className="flex-1  transition-all duration-300 overflow-auto">
+      <div className="flex-1 transition-all duration-300 overflow-auto">
         <div className="min-h-screen bg-bg-1 p-6">
           <div className="max-w-4xl mx-auto">
           

@@ -7,7 +7,6 @@ import Notes from "./Notes";
 import SubjectNotes from "./SubjectNotes";
 import Quiz from "./Quiz";
 import Admin from "./Admin";
-import NotificationPage from "./NotificationPage";
 
 export {
   Auth,
@@ -19,5 +18,4 @@ export {
   SubjectNotes,
   Quiz,
   Admin,
-  NotificationPage,
 };

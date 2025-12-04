@@ -56,9 +56,9 @@ function NotificationPage() {
   return (
     <div className="flex h-screen bg-bg">
       <Navbar />
-      <div className="flex-1  transition-all duration-300">
+      <div className="flex-1 flex flex-col transition-all duration-300">
         <HeaderBar />
-        <div className="w-full min-h-screen bg-bg pt-24 px-4 sm:px-6 lg:px-12 flex justify-center">
+        <div className="w-full flex-1 bg-bg pt-24 px-4 sm:px-6 lg:px-12 flex justify-center overflow-auto">
           <div className="w-full max-w-2xl space-y-6">
             <h1 className="text-3xl font-bold text-white">All Notifications</h1>
 

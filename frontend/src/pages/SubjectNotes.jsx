@@ -11,7 +11,7 @@ function SubjectNotes() {
       <Navbar />
 
       {/* Main Content Area */}
-      <div className="flex-1  transition-all duration-300">
+      <div className="flex-1 transition-all duration-300">
         <div className="pb-0 pr-0 rounded-lg gap-5 flex flex-col h-full">
           <HeaderBar />
 

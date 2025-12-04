@@ -15,4 +15,3 @@ export const quizResults = "/quiz/results/:attemptId";
 export const quizHistory = "/quiz/history";
 export const profile = "/profile";
 export const admin = "/admin";
-export const notifications = "/notifications";

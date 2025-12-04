@@ -18,7 +18,6 @@ import {
   quizHistory,
   profile,
   admin,
-  notifications,
 } from "./Routes/Routes";
 
 import {
@@ -31,7 +30,6 @@ import {
   SubjectNotes,
   Quiz,
   Admin,
-  NotificationPage,
 } from "./pages/index.pages";
 import Profile from "./pages/Profile";
 import CreateQuiz from "./components/quiz/CreateQuiz";
@@ -83,7 +81,6 @@ function App() {
         <Route path={quizHistory} element={<QuizHistory />} />
         <Route path={profile} element={<Profile />} />
         <Route path={admin} element={<Admin />} />
-        <Route path={notifications} element={<NotificationPage />} />
       </Routes>
     </>
   );

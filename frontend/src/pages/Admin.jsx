@@ -24,7 +24,7 @@ function Admin() {
   }, []);
 
   return (
-    <div className="w-screen min-h-screen overflow-hidden">
+    <div className="w-screen min-h-screen overflow-y-auto overflow-x-hidden">
       <AdminNavbar />
       <AdminHeader />
       <AdminDashboard />

@@ -47,7 +47,7 @@ function AdminNavbar() {
       // allow the hash update to propagate, then scroll
       setTimeout(() => {
         const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
       }, 60);
       return;
     }
@@ -91,7 +91,7 @@ function AdminNavbar() {
             }}
           >
             <span className="text-3xl">🎓</span>
-            <span>EduGenie</span>
+            <span>EduGenie Admin</span>
           </h1>
           <p className="text-white/60 text-sm mt-1">Your Learning Companion</p>
         </div>

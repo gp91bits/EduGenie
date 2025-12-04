@@ -43,8 +43,8 @@ function Events() {
     <div className="flex h-screen bg-bg">
       <Navbar />
       {/* Main Content Area */}
-      <div className="flex-1  transition-all duration-300">
-      <HeaderBar />
+      <div className="flex-1 transition-all duration-300">
+        <HeaderBar />
         <div className="m-4 h-full overflow-auto">
           <div className="max-w-[980px] w-full mx-auto h-full">
             {loading ? (

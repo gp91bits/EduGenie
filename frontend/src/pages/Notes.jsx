@@ -7,9 +7,9 @@ function Notes() {
       <Navbar />
 
       {/* Main Content Area */}
-      <div className="flex-1  transition-all duration-300">
-          <HeaderBar />
-        <div className="p-10 rounded-lg gap-5 flex flex-col h-full overflow-auto">
+      <div className="flex-1 flex flex-col transition-all duration-300">
+        <HeaderBar />
+        <div className="flex-1 p-10 rounded-lg gap-5 flex flex-col overflow-auto">
           <Progress />
           <Subjects />
         </div>

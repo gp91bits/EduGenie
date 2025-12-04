@@ -98,6 +98,23 @@ function HeaderBar() {
     };
   }, [userData]);
 
+  // Close notifications dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showNotifications]);
+
   const getProfilePictureUrl = () => {
     const pic = profilePicture || userData?.profilePicture || null;
     if (!pic) return null;

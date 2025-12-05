@@ -12,12 +12,10 @@ function CreateEvent({ open, date, onClose, initialEvent = null }) {
   const [events, setEvents] = useState([]);
   const [isOpen, setIsOpen] = useState(open);
 
-  // keep internal open state in sync with prop
   useEffect(() => {
     setIsOpen(!!open);
   }, [open]);
 
-  // when initialEvent changes (edit mode), prefill form
   useEffect(() => {
     if (initialEvent) {
       setFormData({

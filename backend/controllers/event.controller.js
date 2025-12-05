@@ -1,6 +1,5 @@
 import Event from "../models/Events.js";
 
-import User from "../models/Users.js"; 
 
 // Create Event for a logged-in user
 export const createEvent = async (req, res) => {

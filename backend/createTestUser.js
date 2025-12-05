@@ -8,7 +8,7 @@ dotenv.config();
 async function createTestUser() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("✅ MongoDB connected");
+        console.log(" MongoDB connected");
 
         // Check if user already exists
         const existingUser = await User.findOne({ email: "test@example.com" });
@@ -31,9 +31,7 @@ async function createTestUser() {
         });
 
         await newUser.save();
-        console.log("✅ Test user created successfully!");
-        console.log("Email: test@example.com");
-        console.log("Password: Test@123");
+       
 
         process.exit(0);
     } catch (err) {

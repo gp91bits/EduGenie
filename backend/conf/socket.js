@@ -13,7 +13,6 @@ export default function initSocket(server) {
   });
 
   io.on("connection", (socket) => {
-    console.log("Client connected:", socket.id);
 
     socket.on("joinRoom", ({ room }) => {
       socket.join(room);
@@ -38,7 +37,6 @@ export default function initSocket(server) {
     });
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
     });
   });
 }

@@ -511,9 +511,9 @@ export const deleteQuiz = async (req, res) => {
 
 export const getAllNotes = async (req, res) => {
   try {
-    console.log("[getAllNotes] Received request from user:", req.user?.email);
+    
     const allContent = await SubjectNotes.find({});
-    console.log("[getAllNotes] Found " + allContent.length + " records");
+   
 
     // Organize by semester, then by subject
     const semesters = {};
@@ -539,7 +539,6 @@ export const getAllNotes = async (req, res) => {
       (a, b) => a.semesterId - b.semesterId
     );
 
-    console.log("[getAllNotes] Returning " + result.length + " semesters");
     return res.status(200).json({ data: result });
   } catch (error) {
     console.error("[getAllNotes] error:", error);

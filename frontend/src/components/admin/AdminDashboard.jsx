@@ -37,7 +37,7 @@ function AdminDashboard() {
                         console.error("News fetch error:", e);
                         return { data: { news: [] } };
                     }),
-                    API.get("/events/getEvents").catch(e => {
+                    API.get("/event/getEvents").catch(e => {
                         console.error("Events fetch error:", e);
                         return { data: { events: [] } };
                     }),
@@ -86,12 +86,21 @@ function AdminDashboard() {
         fetchDashboardData();
     }, []);
 
-    const scrollTo = (id) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.scrollIntoView({ behavior: "instant", block: "start" });
-        }
-    };
+   const goToSection = (id) => {
+   
+
+    if (location.pathname !== "/admin") {
+      navigate(`/admin#${id}`);
+      return;
+    }
+
+    navigate(`/admin#${id}`, { replace: true });
+
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
+    }, 50);
+  };
 
     if (loading) {
         return (
@@ -121,7 +130,7 @@ function AdminDashboard() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     {/* Users Card */}
                     <button 
-                        onClick={() => scrollTo("adminUsers")}
+                        onClick={() => goToSection("adminUsers")}
                         className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all text-left cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -136,7 +145,7 @@ function AdminDashboard() {
 
                     {/* News Card */}
                     <button 
-                        onClick={() => scrollTo("addNews")}
+                        onClick={() => goToSection("addNews")}
                         className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all text-left cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -151,7 +160,7 @@ function AdminDashboard() {
 
                     {/* Events Card */}
                     <button 
-                        onClick={() => scrollTo("addEvents")}
+                        onClick={() => goToSection("addEvents")}
                         className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-200 transition-all text-left cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -166,7 +175,7 @@ function AdminDashboard() {
 
                     {/* Notes Card */}
                     <button 
-                        onClick={() => scrollTo("addNotes")}
+                        onClick={() => goToSection("addNotes")}
                         className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all text-left cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -265,7 +274,7 @@ function AdminDashboard() {
                             </div>
                             <div className="p-4 space-y-2">
                                 <button
-                                    onClick={() => scrollTo("adminUsers")}
+                                    onClick={() => goToSection("adminUsers")}
                                     className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3">
@@ -278,7 +287,7 @@ function AdminDashboard() {
                                 </button>
                                 
                                 <button
-                                    onClick={() => scrollTo("addNews")}
+                                    onClick={() => goToSection("addNews")}
                                     className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3">
@@ -291,7 +300,7 @@ function AdminDashboard() {
                                 </button>
                                 
                                 <button
-                                    onClick={() => scrollTo("addEvents")}
+                                    onClick={() => goToSection("addEvents")}
                                     className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3">
@@ -304,7 +313,7 @@ function AdminDashboard() {
                                 </button>
                                 
                                 <button
-                                    onClick={() => scrollTo("addNotes")}
+                                    onClick={() => goToSection("addNotes")}
                                     className="w-full flex items-center justify-between p-3 rounded-lg text-left hover:bg-gray-50 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3">

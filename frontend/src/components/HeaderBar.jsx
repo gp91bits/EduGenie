@@ -216,6 +216,7 @@ function HeaderBar() {
             <button
               className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-200 group"
               title="Messages"
+              onClick={()=>navigate('/chat')}
             >
               <MessageSquareMore
                 size={20}

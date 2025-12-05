@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import API from "../api/axios";
 import { Bell } from "lucide-react";
 import { HeaderBar, Navbar } from "../components/index.components";
+import { useNavigate } from "react-router-dom";
+import { semesterData } from "../semesterData"; // adjust path if needed
 
 function formatTime(ts) {
   const date = new Date(ts);
@@ -24,9 +26,21 @@ function formatTime(ts) {
   });
 }
 
+// Resolve subject ID from name if backend didn't send subjectId
+function resolveSubjectId(name) {
+  if (!name) return null;
+  for (const sem of Object.values(semesterData)) {
+    const found = sem.subjects.find((s) => s.name === name);
+    if (found) return found.id;
+  }
+  return null;
+}
+
 function NotificationPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all"); // added filter
+  const navigate = useNavigate();
 
   const load = async () => {
     try {
@@ -49,40 +63,99 @@ function NotificationPage() {
     }
   };
 
+  const handleClick = async (n) => {
+    if (!n.isRead) await markOne(n._id);
+
+    // External redirect
+    if (n.actionUrl && /^https?:\/\//.test(n.actionUrl)) {
+      window.location.href = n.actionUrl;
+      return;
+    }
+
+    switch (n.category) {
+      case "notes": {
+        const subjectId =
+          n.metadata?.subjectId ||
+          resolveSubjectId(n.metadata?.subjectName || n.title);
+        if (subjectId) navigate(`/notes/${subjectId}`);
+        else navigate("/notes");
+        break;
+      }
+
+      case "news":
+        navigate("/news");
+        break;
+
+      case "events":
+        navigate("/events");
+        break;
+
+      default:
+        // fallback to the notifications page itself
+        break;
+    }
+  };
+
   useEffect(() => {
     load();
   }, []);
 
+  const filtered = items.filter((n) =>
+    filter === "all" ? true : n.category === filter
+  );
+
   return (
     <div className="flex h-screen bg-bg">
       <Navbar />
-      <div className="flex-1 flex flex-col transition-all duration-300">
+      <div className="flex-1 transition-all duration-300">
         <HeaderBar />
         <div className="w-full flex-1 bg-bg pt-24 px-4 sm:px-6 lg:px-12 flex justify-center overflow-auto">
           <div className="w-full max-w-2xl space-y-6">
-            <h1 className="text-3xl font-bold text-white">All Notifications</h1>
+
+            {/* Title + Filter */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">All Notifications</h1>
+
+              <div className="flex gap-2 text-xs text-slate-300">
+                {["all", "notes", "news", "events"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setFilter(t)}
+                    className={`px-2 py-0.5 rounded ${
+                      filter === t
+                        ? "bg-purple-700 text-white"
+                        : "hover:text-white"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {loading ? (
               <div className="text-slate-400">Loading...</div>
-            ) : items.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <div className="text-slate-500">No notifications</div>
             ) : (
               <div className="space-y-3">
-                {items.map((n) => (
+                {filtered.map((n) => (
                   <div
                     key={n._id}
-                    onClick={() => !n.isRead && markOne(n._id)}
+                    onClick={() => handleClick(n)}
                     className={`bg-bg-2 p-4 rounded-xl border cursor-pointer transition 
-    ${
-      !n.isRead
-        ? "bg-purple-900/10 border-slate-700 hover:border-slate-500"
-        : "border-slate-800  0"
-    }`}
+                      ${
+                        !n.isRead
+                          ? "bg-purple-900/10 border-slate-700 hover:border-slate-500"
+                          : "border-slate-800"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`w-9 h-9  ${
-                            n.isRead ? "bg-accent/55" : "bg-accent"
-                          } rounded flex items-center justify-center`}>
+                      <div
+                        className={`w-9 h-9 ${
+                          n.isRead ? "bg-accent/55" : "bg-accent"
+                        } rounded flex items-center justify-center`}
+                      >
                         <Bell size={18} className="text-white" />
                       </div>
 
@@ -122,4 +195,5 @@ function NotificationPage() {
     </div>
   );
 }
+
 export default NotificationPage;
